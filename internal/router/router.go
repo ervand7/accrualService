@@ -17,6 +17,8 @@ func newRouter() chi.Router {
 	server := views.NewServer()
 	r.Route("/", func(r chi.Router) {
 		r.Post("/api/user/register", server.UserRegister)
+		r.Post("/api/user/login", server.UserLogin)
+		r.Post("/api/user/orders", server.UserLoadOrders)
 	})
 
 	return r

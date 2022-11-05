@@ -27,6 +27,14 @@ func (server Server) SetCookie(token string, w http.ResponseWriter) {
 	http.SetCookie(w, cookie)
 }
 
+func (server Server) GetTokenFromCookie(r *http.Request) (token string, err error) {
+	_, err = r.Cookie("auth_token")
+	if err != nil {
+		return "", err
+	}
+	return token, nil
+}
+
 func (server Server) Write(msg []byte, w http.ResponseWriter) {
 	_, err := w.Write(msg)
 	if err != nil {
