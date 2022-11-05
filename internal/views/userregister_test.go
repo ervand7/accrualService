@@ -10,64 +10,66 @@ import (
 	"testing"
 )
 
-func TestUserRegister(t *testing.T) {
+func TestUserRegister_200Success(t *testing.T) {
 	apiMethod := "/api/user/register"
-	type want struct {
-		statusCode int
-	}
-	tests := []struct {
-		name string
-		body string
-		want want
-	}{
-		{
-			name: "success 200",
-			body: `{
-				"login": "hello",
-				"password": "world"
-			}`,
-			want: want{
-				statusCode: http.StatusOK,
-			},
-		},
-		{
-			name: "fail 400",
-			body: "",
-			want: want{
-				statusCode: http.StatusBadRequest,
-			},
-		},
-	}
-	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
+	var body = []byte(`{
+		"login": "hello",
+		"password": "world"
+	}`)
+	request := httptest.NewRequest(
+		http.MethodPost,
+		apiMethod,
+		bytes.NewBuffer(body),
+	)
 
-			var body = []byte(tt.body)
-			request := httptest.NewRequest(
-				http.MethodPost,
-				apiMethod,
-				bytes.NewBuffer(body),
-			)
+	server := NewServer()
+	defer func() {
+		server.Storage.DB.Downgrade()
+	}()
 
-			server := NewServer()
-			defer func() {
-				server.Storage.DB.Downgrade()
-			}()
+	router := chi.NewRouter()
+	router.HandleFunc(apiMethod, server.UserRegister)
+	writer := httptest.NewRecorder()
+	router.ServeHTTP(writer, request)
 
-			router := chi.NewRouter()
-			router.HandleFunc(apiMethod, server.UserRegister)
-			writer := httptest.NewRecorder()
-			router.ServeHTTP(writer, request)
+	response := writer.Result()
+	assert.Equal(t, http.StatusOK, response.StatusCode)
+	setCookie := response.Header.Get("Set-Cookie")
+	assert.Contains(t, setCookie, "auth_token=")
 
-			response := writer.Result()
-			assert.Equal(t, tt.want.statusCode, response.StatusCode)
-
-			err := response.Body.Close()
-			require.NoError(t, err)
-		})
-	}
+	err := response.Body.Close()
+	require.NoError(t, err)
 }
 
-func TestUserRegister_LoginAlreadyExists(t *testing.T) {
+func TestUserRegister_400BadRequest(t *testing.T) {
+	apiMethod := "/api/user/register"
+	var body = []byte("")
+	request := httptest.NewRequest(
+		http.MethodPost,
+		apiMethod,
+		bytes.NewBuffer(body),
+	)
+
+	server := NewServer()
+	defer func() {
+		server.Storage.DB.Downgrade()
+	}()
+
+	router := chi.NewRouter()
+	router.HandleFunc(apiMethod, server.UserRegister)
+	writer := httptest.NewRecorder()
+	router.ServeHTTP(writer, request)
+
+	response := writer.Result()
+	assert.Equal(t, http.StatusBadRequest, response.StatusCode)
+	setCookie := response.Header.Get("Set-Cookie")
+	assert.Empty(t, setCookie)
+
+	err := response.Body.Close()
+	require.NoError(t, err)
+}
+
+func TestUserRegister_409LoginAlreadyExists(t *testing.T) {
 	apiMethod := "/api/user/register"
 	var body = []byte(`{
 		"login": "hello",

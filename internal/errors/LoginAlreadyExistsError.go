@@ -15,10 +15,10 @@ func NewLoginAlreadyExistsError(login string) error {
 	}
 }
 
-func (s LoginAlreadyExistsError) Unwrap() error {
-	return s.Err
+func (l LoginAlreadyExistsError) Unwrap() error {
+	return l.Err
 }
 
-func (s LoginAlreadyExistsError) Error() string {
-	return fmt.Sprintf("%s already exists", s.Err)
+func (l LoginAlreadyExistsError) Error() string {
+	return fmt.Sprintf("%s already exists", l.Err)
 }
