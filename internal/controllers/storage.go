@@ -53,3 +53,36 @@ func (storage *Storage) CreateUser(
 
 	return nil
 }
+
+func (storage *Storage) UpdateToken(
+	ctx context.Context, login, password, newToken string,
+) error {
+	hashedPassword := fmt.Sprintf("%x", sha256.Sum256([]byte(password)))
+	query := `
+		update "public"."user" set "token" = $3
+		where "login" = $1 and "password" = $2
+		returning "token";
+`
+	var setToken string
+	rows, err := storage.DB.Conn.QueryContext(ctx, query, login, hashedPassword, newToken)
+	if err != nil {
+		return err
+	}
+	defer storage.DB.CloseRows(rows)
+
+	for rows.Next() {
+		err = rows.Scan(&setToken)
+		if err != nil {
+			return err
+		}
+	}
+	err = rows.Err()
+	if err != nil {
+		return err
+	}
+	if setToken == "" {
+		return e.NewUserNotFoundError(login, password)
+	}
+
+	return nil
+}
