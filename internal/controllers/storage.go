@@ -89,7 +89,7 @@ func (storage *Storage) UpdateToken(
 }
 
 func (storage *Storage) CreateOrder(
-	ctx context.Context, token string, orderNum int,
+	ctx context.Context, userID string, orderNumber int,
 ) error {
 	query := `
 		with cte as (
@@ -105,20 +105,15 @@ func (storage *Storage) CreateOrder(
 		where "number" = $2
 		  and not exists(select 1 from cte);
 	`
-	userID, err := storage.getUserIDByToken(ctx, token)
-	if err != nil {
-		return err
-	}
-
 	rows, err := storage.DB.Conn.QueryContext(
-		ctx, query, userID, orderNum, models.OrderStatus.NEW,
+		ctx, query, userID, orderNumber, models.OrderStatus.NEW,
 	)
 	if err != nil {
 		return err
 	}
 	defer storage.DB.CloseRows(rows)
 
-	var UserIDFromException string
+	var UserIDFromException interface{}
 	for rows.Next() {
 		err = rows.Scan(&UserIDFromException)
 		if err != nil {
@@ -129,19 +124,19 @@ func (storage *Storage) CreateOrder(
 	if err != nil {
 		return err
 	}
-	if UserIDFromException != "" {
+	if UserIDFromException != nil {
 		switch {
 		case UserIDFromException == userID:
-			return e.NewOrderAlreadyCreatedByCurrentUser(userID)
+			return e.NewOrderAlreadyExistsError(userID, true)
 		default:
-			return e.NewOrderAlreadyCreatedByAnotherUser(userID)
+			return e.NewOrderAlreadyExistsError(userID, false)
 		}
 	}
 
 	return nil
 }
 
-func (storage *Storage) getUserIDByToken(
+func (storage *Storage) GetUserIDByToken(
 	ctx context.Context, token string,
 ) (userID string, err error) {
 	query := `

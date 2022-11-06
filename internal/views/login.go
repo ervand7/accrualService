@@ -51,7 +51,7 @@ func (server *Server) UserLogin(w http.ResponseWriter, r *http.Request) {
 			return
 		}
 	} else {
-		server.SetCookie(token, w)
+		server.SetCookieToResponse(token, w)
 	}
 
 	w.Header().Add("Content-type", "text/plain; charset=utf-8")

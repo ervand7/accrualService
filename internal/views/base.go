@@ -1,6 +1,7 @@
 package views
 
 import (
+	"context"
 	"encoding/hex"
 	"github.com/ervand7/go-musthave-diploma-tpl/internal/controllers"
 	"github.com/ervand7/go-musthave-diploma-tpl/internal/logger"
@@ -21,18 +22,41 @@ func NewServer() Server {
 	return s
 }
 
-func (server Server) SetCookie(token string, w http.ResponseWriter) {
+func (server Server) SetCookieToResponse(token string, w http.ResponseWriter) {
 	encoded := hex.EncodeToString([]byte(token))
 	cookie := &http.Cookie{Name: "auth_token", Value: encoded, HttpOnly: true}
 	http.SetCookie(w, cookie)
 }
 
-func (server Server) GetTokenFromCookie(r *http.Request) (token string, err error) {
-	_, err = r.Cookie("auth_token")
+func (server Server) SetCookieToRequest(token string, r *http.Request) {
+	encoded := hex.EncodeToString([]byte(token))
+	cookie := &http.Cookie{Name: "auth_token", Value: encoded, HttpOnly: true}
+	r.AddCookie(cookie)
+}
+
+func (server Server) GetUserIDFromRequest(
+	ctx context.Context, r *http.Request,
+) (userID string) {
+	data, err := r.Cookie("auth_token")
 	if err != nil {
-		return "", err
+		logger.Logger.Error(err.Error())
+		return ""
 	}
-	return token, nil
+
+	encodedToken := data.Value
+	decodedToken, err := hex.DecodeString(encodedToken)
+	if err != nil {
+		logger.Logger.Error(err.Error())
+		return ""
+	}
+
+	userID, err = server.Storage.GetUserIDByToken(ctx, string(decodedToken))
+	if err != nil {
+		logger.Logger.Error(err.Error())
+		return ""
+	}
+
+	return userID
 }
 
 func (server Server) Write(msg []byte, w http.ResponseWriter) {
