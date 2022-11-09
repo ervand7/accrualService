@@ -3,7 +3,6 @@ package views
 import (
 	"bytes"
 	"context"
-	"encoding/hex"
 	"fmt"
 	"github.com/go-chi/chi/v5"
 	"github.com/google/uuid"
@@ -28,15 +27,14 @@ func TestUserLogin_200Success(t *testing.T) {
 		apiMethod,
 		bytes.NewBuffer(body),
 	)
-	oldToken := uuid.New().String()
-	encoded := hex.EncodeToString([]byte(oldToken))
-	cookie := &http.Cookie{Name: "auth_token", Value: encoded, HttpOnly: true}
-	request.AddCookie(cookie)
 
 	server := NewServer()
 	defer func() {
 		server.Storage.DB.Downgrade()
 	}()
+	oldToken := uuid.New().String()
+	server.SetCookieToRequest(oldToken, request)
+
 	err := server.Storage.CreateUser(
 		context.TODO(), login, password, oldToken,
 	)

@@ -7,7 +7,7 @@ create type "order_status" as enum (
 
 create table if not exists "user"
 (
-    "id"       uuid DEFAULT gen_random_uuid() PRIMARY KEY,
+    "id"       uuid default gen_random_uuid() primary key,
     "login"    varchar(100)  not null
         unique,
     "password" varchar(100)  not null,
@@ -17,17 +17,17 @@ create table if not exists "user"
 
 create table if not exists "order"
 (
-    "id"          uuid DEFAULT gen_random_uuid() PRIMARY KEY,
+    "id"          uuid                                 default gen_random_uuid() primary key,
     "user_id"     uuid                        not null,
-    "number"      int                         not null
+    "number"      bigint                      not null
         unique,
     "status"      "order_status"              not null,
-    "uploaded_at" timestamp without time zone not null
+    "uploaded_at" timestamp without time zone not null default now()
 );
 
 create table if not exists "accrual"
 (
-    "id"       uuid DEFAULT gen_random_uuid() PRIMARY KEY,
+    "id"       uuid default gen_random_uuid() primary key,
     "user_id"  uuid    not null,
     "order_id" uuid    not null,
     "amount"   decimal not null
@@ -35,11 +35,11 @@ create table if not exists "accrual"
 
 create table if not exists "withdrawal"
 (
-    "id"           uuid DEFAULT gen_random_uuid() PRIMARY KEY,
+    "id"           uuid                                 default gen_random_uuid() primary key,
     "user_id"      uuid                        not null,
     "order_id"     uuid                        not null,
     "amount"       decimal                     not null,
-    "processed_at" timestamp without time zone not null
+    "processed_at" timestamp without time zone not null default now()
 );
 
 
