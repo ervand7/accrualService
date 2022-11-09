@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"context"
 	"fmt"
+	"github.com/ervand7/go-musthave-diploma-tpl/internal/database"
 	"github.com/go-chi/chi/v5"
 	"github.com/google/uuid"
 	"github.com/stretchr/testify/assert"
@@ -15,6 +16,7 @@ import (
 )
 
 func TestUserLogin_200Success(t *testing.T) {
+	defer database.Downgrade()
 	apiMethod := "/api/user/login"
 	login := "hello"
 	password := "world"
@@ -29,9 +31,6 @@ func TestUserLogin_200Success(t *testing.T) {
 	)
 
 	server := NewServer()
-	defer func() {
-		server.Storage.DB.Downgrade()
-	}()
 	oldToken := uuid.New().String()
 	server.SetCookieToRequest(oldToken, request)
 
@@ -56,6 +55,7 @@ func TestUserLogin_200Success(t *testing.T) {
 }
 
 func TestUserLogin_400BadRequest(t *testing.T) {
+	defer database.Downgrade()
 	apiMethod := "/api/user/login"
 	var body = []byte("")
 	request := httptest.NewRequest(
@@ -65,10 +65,6 @@ func TestUserLogin_400BadRequest(t *testing.T) {
 	)
 
 	server := NewServer()
-	defer func() {
-		server.Storage.DB.Downgrade()
-	}()
-
 	router := chi.NewRouter()
 	router.HandleFunc(apiMethod, server.UserLogin)
 	writer := httptest.NewRecorder()
@@ -84,6 +80,7 @@ func TestUserLogin_400BadRequest(t *testing.T) {
 }
 
 func TestUserLogin_401WrongLoginOrPassword(t *testing.T) {
+	defer database.Downgrade()
 	apiMethod := "/api/user/login"
 	login := "hello"
 	password := "world"
@@ -98,10 +95,6 @@ func TestUserLogin_401WrongLoginOrPassword(t *testing.T) {
 	)
 
 	server := NewServer()
-	defer func() {
-		server.Storage.DB.Downgrade()
-	}()
-
 	router := chi.NewRouter()
 	router.HandleFunc(apiMethod, server.UserLogin)
 	writer := httptest.NewRecorder()

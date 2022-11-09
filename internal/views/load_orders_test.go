@@ -3,6 +3,7 @@ package views
 import (
 	"bytes"
 	"context"
+	"github.com/ervand7/go-musthave-diploma-tpl/internal/database"
 	"github.com/go-chi/chi/v5"
 	"github.com/google/uuid"
 	"github.com/stretchr/testify/assert"
@@ -37,6 +38,7 @@ func createUser(login, password, token string, server Server, t *testing.T) {
 }
 
 func TestUserLoadOrders_Success(t *testing.T) {
+	defer database.Downgrade()
 	apiMethod := "/api/user/orders"
 	var body = []byte("12345678903")
 	request := httptest.NewRequest(
@@ -46,9 +48,6 @@ func TestUserLoadOrders_Success(t *testing.T) {
 	)
 
 	server := NewServer()
-	defer func() {
-		server.Storage.DB.Downgrade()
-	}()
 	token := uuid.New().String()
 	server.SetCookieToRequest(token, request)
 	createUser("1", "2", token, server, t)
@@ -64,6 +63,7 @@ func TestUserLoadOrders_Success(t *testing.T) {
 }
 
 func TestUserLoadOrders_400BadRequest(t *testing.T) {
+	defer database.Downgrade()
 	request := httptest.NewRequest(
 		http.MethodPost,
 		"/api/user/orders",
@@ -71,9 +71,6 @@ func TestUserLoadOrders_400BadRequest(t *testing.T) {
 	)
 
 	server := NewServer()
-	defer func() {
-		server.Storage.DB.Downgrade()
-	}()
 	token := uuid.New().String()
 	server.SetCookieToRequest(token, request)
 	createUser("1", "2", token, server, t)
@@ -81,6 +78,7 @@ func TestUserLoadOrders_400BadRequest(t *testing.T) {
 }
 
 func TestUserLoadOrders_401Unauthorized(t *testing.T) {
+	defer database.Downgrade()
 	request := httptest.NewRequest(
 		http.MethodPost,
 		"/api/user/orders",
@@ -88,19 +86,14 @@ func TestUserLoadOrders_401Unauthorized(t *testing.T) {
 	)
 
 	server := NewServer()
-	defer func() {
-		server.Storage.DB.Downgrade()
-	}()
 	loadOrder(server, request, http.StatusUnauthorized, t)
 }
 
 func TestUserLoadOrders_409Conflict(t *testing.T) {
+	defer database.Downgrade()
 	apiMethod := "/api/user/orders"
 	var body = []byte("12345678903")
 	server := NewServer()
-	defer func() {
-		server.Storage.DB.Downgrade()
-	}()
 
 	token := uuid.New().String()
 	request := httptest.NewRequest(
@@ -124,6 +117,7 @@ func TestUserLoadOrders_409Conflict(t *testing.T) {
 }
 
 func TestUserLoadOrders_422InvalidOrderNumber(t *testing.T) {
+	defer database.Downgrade()
 	request := httptest.NewRequest(
 		http.MethodPost,
 		"/api/user/orders",
@@ -131,9 +125,6 @@ func TestUserLoadOrders_422InvalidOrderNumber(t *testing.T) {
 	)
 
 	server := NewServer()
-	defer func() {
-		server.Storage.DB.Downgrade()
-	}()
 	token := uuid.New().String()
 	server.SetCookieToRequest(token, request)
 	createUser("1", "2", token, server, t)

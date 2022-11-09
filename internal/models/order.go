@@ -19,9 +19,8 @@ var OrderStatus = struct {
 }
 
 type Order struct {
-	ID         string
+	ID         int
 	UserID     string
-	Number     int
 	Status     OrderStatusEnumValue
 	UploadedAt time.Time
 }

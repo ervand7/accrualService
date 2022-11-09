@@ -1,4 +1,4 @@
-package controllers
+package database
 
 import (
 	"context"
@@ -12,23 +12,40 @@ import (
 	"testing"
 )
 
-func TestCreateUser_Success(t *testing.T) {
-	storage := NewStorage()
-	defer func() {
-		storage.DB.Downgrade()
-	}()
+func userIDFixture(
+	storage *Storage, login, password, token string, t *testing.T,
+) (userID string) {
+	rows, err := storage.db.Conn.Query(`
+		insert into "public"."user" ("login", "password", "token") values
+		($1, $2, $3) returning "user"."id"
+		`, login, password, token,
+	)
+	assert.NoError(t, err)
+	defer storage.db.CloseRows(rows)
 
-	login := "hello"
-	password := "world"
+	for rows.Next() {
+		err = rows.Scan(&userID)
+		assert.NoError(t, err)
+	}
+	err = rows.Err()
+	assert.NoError(t, err)
+
+	return userID
+}
+
+func TestCreateUser_Success(t *testing.T) {
+	defer Downgrade()
+	storage := NewStorage()
+
+	login := "1"
+	password := "1"
 	token := uuid.New().String()
 	err := storage.CreateUser(context.TODO(), login, password, token)
 	assert.NoError(t, err)
 
-	rows, err := storage.DB.Conn.Query(`select * from "public"."user"`)
+	rows, err := storage.db.Conn.Query(`select * from "public"."user"`)
 	assert.NoError(t, err)
-	defer func() {
-		storage.DB.CloseRows(rows)
-	}()
+	defer storage.db.CloseRows(rows)
 
 	var user models.User
 	for rows.Next() {
@@ -48,13 +65,11 @@ func TestCreateUser_Success(t *testing.T) {
 }
 
 func TestCreateUser_FailLoginAlreadyExists(t *testing.T) {
+	defer Downgrade()
 	storage := NewStorage()
-	defer func() {
-		storage.DB.Downgrade()
-	}()
 
-	login := "hello"
-	password := "world"
+	login := "1"
+	password := "1"
 	token := uuid.New().String()
 	ctx := context.TODO()
 	err := storage.CreateUser(ctx, login, password, token)
@@ -66,13 +81,11 @@ func TestCreateUser_FailLoginAlreadyExists(t *testing.T) {
 }
 
 func TestUpdateToken_Success(t *testing.T) {
+	defer Downgrade()
 	storage := NewStorage()
-	defer func() {
-		storage.DB.Downgrade()
-	}()
 
-	login := "hello"
-	password := "world"
+	login := "1"
+	password := "1"
 	oldToken := uuid.New().String()
 	newToken := uuid.New().String()
 	assert.NotEqual(t, oldToken, newToken)
@@ -84,14 +97,12 @@ func TestUpdateToken_Success(t *testing.T) {
 	err = storage.UpdateToken(ctx, login, password, newToken)
 	assert.NoError(t, err)
 
-	rows, err := storage.DB.Conn.Query(`
+	rows, err := storage.db.Conn.Query(`
 		select "token" from "public"."user" where "login" = $1`,
 		login,
 	)
 	assert.NoError(t, err)
-	defer func() {
-		storage.DB.CloseRows(rows)
-	}()
+	defer storage.db.CloseRows(rows)
 
 	var resultToken string
 	for rows.Next() {
@@ -104,25 +115,21 @@ func TestUpdateToken_Success(t *testing.T) {
 }
 
 func TestUpdateToken_FailUserNotFound(t *testing.T) {
+	defer Downgrade()
 	storage := NewStorage()
-	defer func() {
-		storage.DB.Downgrade()
-	}()
 
-	login := "hello"
-	password := "world"
+	login := "1"
+	password := "1"
 	token := uuid.New().String()
 	err := storage.UpdateToken(context.TODO(), login, password, token)
 	assert.Error(t, err)
 
-	rows, err := storage.DB.Conn.Query(`
+	rows, err := storage.db.Conn.Query(`
 		select "token" from "public"."user" where "login" = $1`,
 		login,
 	)
 	assert.NoError(t, err)
-	defer func() {
-		storage.DB.CloseRows(rows)
-	}()
+	defer storage.db.CloseRows(rows)
 
 	var resultToken string
 	for rows.Next() {
@@ -135,31 +142,12 @@ func TestUpdateToken_FailUserNotFound(t *testing.T) {
 }
 
 func TestGetUserIDByToken_Success(t *testing.T) {
+	defer Downgrade()
 	storage := NewStorage()
-	defer func() {
-		storage.DB.Downgrade()
-	}()
 
 	ctx := context.TODO()
-	login := "hello"
-	password := "world"
-	token := "foobar"
-	rows, err := storage.DB.Conn.Query(`
-		insert into "public"."user" ("login", "password", "token") values
-		($1, $2, $3) returning "user"."id"
-		`, login, password, token,
-	)
-	assert.NoError(t, err)
-	defer func() {
-		storage.DB.CloseRows(rows)
-	}()
-	var userID string
-	for rows.Next() {
-		err = rows.Scan(&userID)
-		assert.NoError(t, err)
-	}
-	err = rows.Err()
-	assert.NoError(t, err)
+	token := "1"
+	userID := userIDFixture(storage, "1", "1", token, t)
 
 	result, err := storage.GetUserIDByToken(ctx, token)
 	assert.NoError(t, err)
@@ -167,10 +155,8 @@ func TestGetUserIDByToken_Success(t *testing.T) {
 }
 
 func TestGetUserIDByToken_FailNotFound(t *testing.T) {
+	defer Downgrade()
 	storage := NewStorage()
-	defer func() {
-		storage.DB.Downgrade()
-	}()
 
 	ctx := context.TODO()
 	token := "hello"
@@ -180,74 +166,68 @@ func TestGetUserIDByToken_FailNotFound(t *testing.T) {
 }
 
 func TestCreateOrder_Success(t *testing.T) {
+	defer Downgrade()
 	storage := NewStorage()
-	defer func() {
-		storage.DB.Downgrade()
-	}()
 
 	ctx := context.TODO()
-	userID := uuid.New().String()
 	number := rand.Intn(1000000)
-	err := storage.CreateOrder(ctx, userID, number)
+	userID := userIDFixture(storage, "1", "1", "1", t)
+	err := storage.CreateOrder(ctx, number, userID)
 	assert.NoError(t, err)
 
-	rows, err := storage.DB.Conn.Query(`
-		select "id", "user_id", "number", "status", "uploaded_at" 
+	rows, err := storage.db.Conn.Query(`
+		select "id", "user_id", "status", "uploaded_at" 
 		from "public"."order" 
 		where "user_id" = $1`, userID,
 	)
 	assert.NoError(t, err)
-	defer func() {
-		storage.DB.CloseRows(rows)
-	}()
+	defer storage.db.CloseRows(rows)
+
 	var order models.Order
 	for rows.Next() {
 		err = rows.Scan(
-			&order.ID, &order.UserID, &order.Number, &order.Status, &order.UploadedAt,
+			&order.ID, &order.UserID, &order.Status, &order.UploadedAt,
 		)
 		assert.NoError(t, err)
 	}
 	err = rows.Err()
 	assert.NoError(t, err)
 
-	assert.NotNil(t, order.ID)
+	assert.Equal(t, number, order.ID)
 	assert.Equal(t, userID, order.UserID)
-	assert.Equal(t, number, order.Number)
 	assert.Equal(t, models.OrderStatus.NEW, order.Status)
 	assert.NotNil(t, order.UploadedAt)
 }
 
 func TestCreateOrder_FailAlreadyCreatedByCurrentUser(t *testing.T) {
+	defer Downgrade()
 	storage := NewStorage()
-	defer func() {
-		storage.DB.Downgrade()
-	}()
 
 	ctx := context.TODO()
-	userID := uuid.New().String()
 	number := rand.Intn(1000000)
+	userID := userIDFixture(storage, "1", "1", "1", t)
 
-	err := storage.CreateOrder(ctx, userID, number)
+	err := storage.CreateOrder(ctx, number, userID)
 	assert.NoError(t, err)
 
-	err = storage.CreateOrder(ctx, userID, number)
+	err = storage.CreateOrder(ctx, number, userID)
 	errData, ok := err.(*e.OrderAlreadyExistsError)
 	assert.True(t, ok)
 	assert.True(t, errData.FromCurrentUser)
 }
 
 func TestCreateOrder_FailAlreadyCreatedByAnotherUser(t *testing.T) {
+	defer Downgrade()
 	storage := NewStorage()
-	defer func() {
-		storage.DB.Downgrade()
-	}()
 
 	ctx := context.TODO()
 	number := rand.Intn(1000000)
-	err := storage.CreateOrder(ctx, uuid.New().String(), number)
+	userID := userIDFixture(storage, "1", "1", "1", t)
+	err := storage.CreateOrder(ctx, number, userID)
 	assert.NoError(t, err)
 
-	err = storage.CreateOrder(ctx, uuid.New().String(), number)
+	userID = userIDFixture(storage, "2", "2", "2", t)
+	err = storage.CreateOrder(ctx, number, userID)
 	errData, ok := err.(*e.OrderAlreadyExistsError)
 	assert.True(t, ok)
 	assert.False(t, errData.FromCurrentUser)

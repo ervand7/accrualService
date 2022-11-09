@@ -3,7 +3,7 @@ package views
 import (
 	"context"
 	"encoding/hex"
-	"github.com/ervand7/go-musthave-diploma-tpl/internal/controllers"
+	"github.com/ervand7/go-musthave-diploma-tpl/internal/database"
 	"github.com/ervand7/go-musthave-diploma-tpl/internal/logger"
 	"net/http"
 	"time"
@@ -12,12 +12,12 @@ import (
 const CtxSecond = 2 * time.Second
 
 type Server struct {
-	Storage *controllers.Storage
+	Storage *database.Storage
 }
 
 func NewServer() Server {
 	s := Server{
-		Storage: controllers.NewStorage(),
+		Storage: database.NewStorage(),
 	}
 	return s
 }

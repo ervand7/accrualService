@@ -14,11 +14,11 @@ import (
 	"time"
 )
 
-type Database struct {
+type database struct {
 	Conn *sql.DB
 }
 
-func (db *Database) Run() {
+func (db *database) Run() {
 	err := db.ConnStart()
 	if err != nil {
 		logger.Logger.Fatal(err.Error())
@@ -44,7 +44,7 @@ func (db *Database) Run() {
 	}()
 }
 
-func (db *Database) ConnStart() (err error) {
+func (db *database) ConnStart() (err error) {
 	conn, err := goose.OpenDBWithDriver("pgx", config.GetConfig().DatabaseURI)
 	if err != nil {
 		return err
@@ -53,7 +53,7 @@ func (db *Database) ConnStart() (err error) {
 	return nil
 }
 
-func (db *Database) ConnClose() (err error) {
+func (db *database) ConnClose() (err error) {
 	err = db.Conn.Close()
 	if err != nil {
 		return err
@@ -61,7 +61,7 @@ func (db *Database) ConnClose() (err error) {
 	return nil
 }
 
-func (db *Database) Ping() (err error) {
+func (db *database) Ping() (err error) {
 	err = db.Conn.Ping()
 	if err != nil {
 		return err
@@ -69,31 +69,24 @@ func (db *Database) Ping() (err error) {
 	return nil
 }
 
-func (db *Database) CloseRows(rows *sql.Rows) {
+func (db *database) CloseRows(rows *sql.Rows) {
 	if err := rows.Close(); err != nil {
 		logger.Logger.Error(err.Error())
 	}
 }
 
-func (db *Database) Downgrade() (err error) {
-	if err = goose.Run("down", db.Conn, getMigrationsDir()); err != nil {
-		return err
-	}
-	return nil
-}
-
-func (db *Database) migrate() (err error) {
-	if err = goose.Run("up", db.Conn, getMigrationsDir()); err != nil {
-		return err
-	}
-	return nil
-}
-
-func (db *Database) setConnPool() {
+func (db *database) setConnPool() {
 	db.Conn.SetMaxOpenConns(20)
 	db.Conn.SetMaxIdleConns(20)
 	db.Conn.SetConnMaxIdleTime(time.Second * 30)
 	db.Conn.SetConnMaxLifetime(time.Minute * 2)
+}
+
+func (db *database) migrate() (err error) {
+	if err = goose.Run("up", db.Conn, getMigrationsDir()); err != nil {
+		return err
+	}
+	return nil
 }
 
 func getMigrationsDir() string {
