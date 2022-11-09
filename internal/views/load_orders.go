@@ -30,30 +30,30 @@ func (server *Server) UserLoadOrders(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, "body is empty", http.StatusBadRequest)
 		return
 	}
-	orderNum, err := strconv.Atoi(string(body))
+	orderNumber, err := strconv.Atoi(string(body))
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusBadRequest)
 		return
 	}
 
 	var respMessage string
-	if !luhn.Valid(orderNum) {
+	if !luhn.Valid(orderNumber) {
 		respMessage = fmt.Sprintf("%s wrong number format", string(body))
 		http.Error(w, respMessage, http.StatusUnprocessableEntity)
 		return
 	}
 
 	httpStatus := http.StatusAccepted
-	err = server.Storage.CreateOrder(ctx, userID, orderNum)
+	err = server.Storage.CreateOrder(ctx, orderNumber, userID)
 	if err != nil {
 		respMessage = err.Error()
-		if errData, ok := err.(*e.OrderAlreadyExistsError); ok {
-			if errData.FromCurrentUser {
-				httpStatus = http.StatusOK
-			} else {
-				httpStatus = http.StatusConflict
-			}
-		} else {
+		errData, ok := err.(*e.OrderAlreadyExistsError)
+		switch ok {
+		case errData.FromCurrentUser:
+			httpStatus = http.StatusOK
+		case !errData.FromCurrentUser:
+			httpStatus = http.StatusConflict
+		case !ok:
 			http.Error(w, respMessage, http.StatusInternalServerError)
 			return
 		}

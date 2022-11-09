@@ -23,11 +23,10 @@ func (server *Server) UserLogin(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	type Credentials struct {
+	var credentials struct {
 		Login    string `json:"login"`
 		Password string `json:"password"`
 	}
-	var credentials Credentials
 	if err = json.Unmarshal(body, &credentials); err != nil {
 		logger.Logger.Error(err.Error())
 		http.Error(w, err.Error(), http.StatusInternalServerError)

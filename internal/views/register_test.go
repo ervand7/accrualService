@@ -2,6 +2,7 @@ package views
 
 import (
 	"bytes"
+	"github.com/ervand7/go-musthave-diploma-tpl/internal/database"
 	"github.com/go-chi/chi/v5"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -11,6 +12,7 @@ import (
 )
 
 func TestUserRegister_200Success(t *testing.T) {
+	defer database.Downgrade()
 	apiMethod := "/api/user/register"
 	var body = []byte(`{
 		"login": "hello",
@@ -23,10 +25,6 @@ func TestUserRegister_200Success(t *testing.T) {
 	)
 
 	server := NewServer()
-	defer func() {
-		server.Storage.DB.Downgrade()
-	}()
-
 	router := chi.NewRouter()
 	router.HandleFunc(apiMethod, server.UserRegister)
 	writer := httptest.NewRecorder()
@@ -42,6 +40,7 @@ func TestUserRegister_200Success(t *testing.T) {
 }
 
 func TestUserRegister_400BadRequest(t *testing.T) {
+	defer database.Downgrade()
 	apiMethod := "/api/user/register"
 	var body = []byte("")
 	request := httptest.NewRequest(
@@ -51,10 +50,6 @@ func TestUserRegister_400BadRequest(t *testing.T) {
 	)
 
 	server := NewServer()
-	defer func() {
-		server.Storage.DB.Downgrade()
-	}()
-
 	router := chi.NewRouter()
 	router.HandleFunc(apiMethod, server.UserRegister)
 	writer := httptest.NewRecorder()
@@ -70,6 +65,7 @@ func TestUserRegister_400BadRequest(t *testing.T) {
 }
 
 func TestUserRegister_409LoginAlreadyExists(t *testing.T) {
+	defer database.Downgrade()
 	apiMethod := "/api/user/register"
 	var body = []byte(`{
 		"login": "hello",
@@ -82,10 +78,6 @@ func TestUserRegister_409LoginAlreadyExists(t *testing.T) {
 	)
 
 	server := NewServer()
-	defer func() {
-		server.Storage.DB.Downgrade()
-	}()
-
 	router1 := chi.NewRouter()
 	router1.HandleFunc(apiMethod, server.UserRegister)
 	writer1 := httptest.NewRecorder()
