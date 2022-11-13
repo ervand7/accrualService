@@ -11,7 +11,7 @@ import (
 	"testing"
 )
 
-func TestUserRegister_200Success(t *testing.T) {
+func TestRegister_200Success(t *testing.T) {
 	defer database.Downgrade()
 	apiMethod := "/api/user/register"
 	var body = []byte(`{
@@ -26,7 +26,7 @@ func TestUserRegister_200Success(t *testing.T) {
 
 	server := NewServer()
 	router := chi.NewRouter()
-	router.HandleFunc(apiMethod, server.UserRegister)
+	router.HandleFunc(apiMethod, server.Register)
 	writer := httptest.NewRecorder()
 	router.ServeHTTP(writer, request)
 
@@ -39,7 +39,7 @@ func TestUserRegister_200Success(t *testing.T) {
 	require.NoError(t, err)
 }
 
-func TestUserRegister_400BadRequest(t *testing.T) {
+func TestRegister_400BadRequest(t *testing.T) {
 	defer database.Downgrade()
 	apiMethod := "/api/user/register"
 	var body = []byte("")
@@ -51,7 +51,7 @@ func TestUserRegister_400BadRequest(t *testing.T) {
 
 	server := NewServer()
 	router := chi.NewRouter()
-	router.HandleFunc(apiMethod, server.UserRegister)
+	router.HandleFunc(apiMethod, server.Register)
 	writer := httptest.NewRecorder()
 	router.ServeHTTP(writer, request)
 
@@ -64,7 +64,7 @@ func TestUserRegister_400BadRequest(t *testing.T) {
 	require.NoError(t, err)
 }
 
-func TestUserRegister_409LoginAlreadyExists(t *testing.T) {
+func TestRegister_409LoginAlreadyExists(t *testing.T) {
 	defer database.Downgrade()
 	apiMethod := "/api/user/register"
 	var body = []byte(`{
@@ -79,7 +79,7 @@ func TestUserRegister_409LoginAlreadyExists(t *testing.T) {
 
 	server := NewServer()
 	router1 := chi.NewRouter()
-	router1.HandleFunc(apiMethod, server.UserRegister)
+	router1.HandleFunc(apiMethod, server.Register)
 	writer1 := httptest.NewRecorder()
 	router1.ServeHTTP(writer1, request1)
 
@@ -92,7 +92,7 @@ func TestUserRegister_409LoginAlreadyExists(t *testing.T) {
 		bytes.NewBuffer(body),
 	)
 	router2 := chi.NewRouter()
-	router2.HandleFunc(apiMethod, server.UserRegister)
+	router2.HandleFunc(apiMethod, server.Register)
 	writer2 := httptest.NewRecorder()
 	router2.ServeHTTP(writer2, request2)
 

@@ -10,8 +10,8 @@ import (
 	"strconv"
 )
 
-// UserLoadOrders /api/user/orders
-func (server *Server) UserLoadOrders(w http.ResponseWriter, r *http.Request) {
+// LoadOrder /api/user/orders
+func (server *Server) LoadOrder(w http.ResponseWriter, r *http.Request) {
 	ctx, cancel := context.WithTimeout(r.Context(), CtxSecond)
 	defer cancel()
 	userID := server.GetUserIDFromRequest(ctx, r)

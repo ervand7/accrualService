@@ -15,7 +15,7 @@ import (
 	"testing"
 )
 
-func TestUserLogin_200Success(t *testing.T) {
+func TestLogin_200Success(t *testing.T) {
 	defer database.Downgrade()
 	apiMethod := "/api/user/login"
 	login := "hello"
@@ -40,7 +40,7 @@ func TestUserLogin_200Success(t *testing.T) {
 	assert.NoError(t, err)
 
 	router := chi.NewRouter()
-	router.HandleFunc(apiMethod, server.UserLogin)
+	router.HandleFunc(apiMethod, server.Login)
 	writer := httptest.NewRecorder()
 	router.ServeHTTP(writer, request)
 
@@ -54,7 +54,7 @@ func TestUserLogin_200Success(t *testing.T) {
 	require.NoError(t, err)
 }
 
-func TestUserLogin_400BadRequest(t *testing.T) {
+func TestLogin_400BadRequest(t *testing.T) {
 	defer database.Downgrade()
 	apiMethod := "/api/user/login"
 	var body = []byte("")
@@ -66,7 +66,7 @@ func TestUserLogin_400BadRequest(t *testing.T) {
 
 	server := NewServer()
 	router := chi.NewRouter()
-	router.HandleFunc(apiMethod, server.UserLogin)
+	router.HandleFunc(apiMethod, server.Login)
 	writer := httptest.NewRecorder()
 	router.ServeHTTP(writer, request)
 
@@ -79,7 +79,7 @@ func TestUserLogin_400BadRequest(t *testing.T) {
 	require.NoError(t, err)
 }
 
-func TestUserLogin_401WrongLoginOrPassword(t *testing.T) {
+func TestLogin_401WrongLoginOrPassword(t *testing.T) {
 	defer database.Downgrade()
 	apiMethod := "/api/user/login"
 	login := "hello"
@@ -96,7 +96,7 @@ func TestUserLogin_401WrongLoginOrPassword(t *testing.T) {
 
 	server := NewServer()
 	router := chi.NewRouter()
-	router.HandleFunc(apiMethod, server.UserLogin)
+	router.HandleFunc(apiMethod, server.Login)
 	writer := httptest.NewRecorder()
 	router.ServeHTTP(writer, request)
 

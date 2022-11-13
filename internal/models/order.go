@@ -35,7 +35,7 @@ type Order struct {
 	UploadedAt time.Time
 }
 
-type UserOrdersInfo struct {
+type OrderInfo struct {
 	Number     string    `json:"number"`
 	Status     string    `json:"status"`
 	Accrual    *float64  `json:"accrual,omitempty"`

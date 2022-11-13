@@ -6,8 +6,8 @@ import (
 	"net/http"
 )
 
-// UserGetOrders /api/user/orders
-func (server *Server) UserGetOrders(w http.ResponseWriter, r *http.Request) {
+// GetOrders /api/user/orders
+func (server *Server) GetOrders(w http.ResponseWriter, r *http.Request) {
 	ctx, cancel := context.WithTimeout(r.Context(), CtxSecond)
 	defer cancel()
 	userID := server.GetUserIDFromRequest(ctx, r)
@@ -16,14 +16,23 @@ func (server *Server) UserGetOrders(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	ordersInfo, _ := server.Storage.GetUserOrders(ctx, userID)
-	var body []byte
-	var httpStatus int
-	if ordersInfo == nil {
+	userOrders, err := server.Storage.GetUserOrders(ctx, userID)
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
+	var (
+		body       []byte
+		httpStatus int
+	)
+	if userOrders == nil {
 		httpStatus = http.StatusNoContent
 	} else {
-		marshaled, _ := json.Marshal(ordersInfo)
-		body = marshaled
+		body, err = json.Marshal(userOrders)
+		if err != nil {
+			http.Error(w, err.Error(), http.StatusInternalServerError)
+			return
+		}
 		httpStatus = http.StatusOK
 	}
 

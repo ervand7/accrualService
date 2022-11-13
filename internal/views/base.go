@@ -5,7 +5,7 @@ import (
 	"encoding/hex"
 	"github.com/ervand7/go-musthave-diploma-tpl/internal/database"
 	"github.com/ervand7/go-musthave-diploma-tpl/internal/logger"
-	"github.com/ervand7/go-musthave-diploma-tpl/internal/utils/accrual"
+	"github.com/ervand7/go-musthave-diploma-tpl/internal/utils"
 	"net/http"
 	"time"
 )
@@ -20,7 +20,7 @@ func NewServer() Server {
 	s := Server{
 		Storage: database.NewStorage(),
 	}
-	accrual.StartWorker(s.Storage)
+	utils.StartWorker(s.Storage)
 	return s
 }
 
@@ -52,7 +52,7 @@ func (server Server) GetUserIDFromRequest(
 		return ""
 	}
 
-	userID, err = server.Storage.GetUserIDByToken(ctx, string(decodedToken))
+	userID, err = server.Storage.GetUserByToken(ctx, string(decodedToken))
 	if err != nil {
 		logger.Logger.Error(err.Error())
 		return ""

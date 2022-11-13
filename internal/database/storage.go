@@ -114,12 +114,6 @@ func (storage *Storage) CreateOrder(
 	return nil
 }
 
-func (storage *Storage) CreateAccrual(orderID int, userID string, amount float64) {
-	query := `insert into "public"."accrual" ("order_id", "user_id", "amount") 
-	values ($1, $2, $3);`
-	storage.db.Conn.QueryRow(query, orderID, userID, amount)
-}
-
 func (storage *Storage) UpdateToken(
 	ctx context.Context, login, password, newToken string,
 ) error {
@@ -146,7 +140,7 @@ func (storage *Storage) UpdateToken(
 	return nil
 }
 
-func (storage *Storage) GetUserIDByToken(
+func (storage *Storage) GetUserByToken(
 	ctx context.Context, token string,
 ) (userID string, err error) {
 	query := `
@@ -165,7 +159,49 @@ func (storage *Storage) GetUserIDByToken(
 	return userID, nil
 }
 
-func (storage *Storage) FindOrdersToAccrual(lastID interface{}) (orders []int, err error) {
+func (storage *Storage) GetUserOrders(
+	ctx context.Context, userID string,
+) (data []models.OrderInfo, err error) {
+	query := `
+		select "order"."id", 
+			   "order"."status", 
+			   "accrual"."amount", 
+			   "order"."uploaded_at"::timestamptz 
+		from "order" 
+				 left outer join "accrual" on "order"."id" = "accrual"."order_id" 
+		where "order"."user_id" = $1 
+		order by "uploaded_at"; 
+	`
+	rows, err := storage.db.Conn.QueryContext(ctx, query, userID)
+	if err != nil {
+		return nil, err
+	}
+	defer storage.db.CloseRows(rows)
+
+	var orderInfo models.OrderInfo
+	for rows.Next() {
+		err = rows.Scan(
+			&orderInfo.Number,
+			&orderInfo.Status,
+			&orderInfo.Accrual,
+			&orderInfo.UploadedAt,
+		)
+		if err != nil {
+			return nil, err
+		}
+		data = append(data, orderInfo)
+	}
+	err = rows.Err()
+	if err != nil {
+		return nil, err
+	}
+
+	return data, nil
+}
+
+func (storage *Storage) FindOrdersToAccrual(
+	lastID interface{},
+) (orders []int, err error) {
 	var lastIDCondition string
 	if lastID != nil {
 		lastIDCondition = fmt.Sprintf(` and "id" > %d `, lastID)
@@ -241,33 +277,4 @@ func (storage *Storage) UpdateOrderAndAccrual(
 	}
 
 	return transaction.Commit()
-}
-
-func (storage *Storage) GetUserOrders(
-	ctx context.Context, userID string,
-) (ordersInfo []models.UserOrdersInfo, err error) {
-	query := `select "order"."id", "order"."status", "accrual"."amount", "order"."uploaded_at"::timestamptz
-	from "order" left outer join "accrual" on "order"."id" = "accrual"."order_id" 
-	where "order"."user_id" = $1 order by "uploaded_at";
-	`
-	rows, err := storage.db.Conn.QueryContext(ctx, query, userID)
-	if err != nil {
-		return nil, err
-	}
-	defer storage.db.CloseRows(rows)
-
-	var orderInfo models.UserOrdersInfo
-	for rows.Next() {
-		err = rows.Scan(&orderInfo.Number, &orderInfo.Status, &orderInfo.Accrual, &orderInfo.UploadedAt)
-		if err != nil {
-			return nil, err
-		}
-		ordersInfo = append(ordersInfo, orderInfo)
-	}
-	err = rows.Err()
-	if err != nil {
-		return nil, err
-	}
-
-	return ordersInfo, nil
 }
