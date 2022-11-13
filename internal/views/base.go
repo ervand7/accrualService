@@ -5,6 +5,7 @@ import (
 	"encoding/hex"
 	"github.com/ervand7/go-musthave-diploma-tpl/internal/database"
 	"github.com/ervand7/go-musthave-diploma-tpl/internal/logger"
+	"github.com/ervand7/go-musthave-diploma-tpl/internal/utils/accrual"
 	"net/http"
 	"time"
 )
@@ -19,6 +20,7 @@ func NewServer() Server {
 	s := Server{
 		Storage: database.NewStorage(),
 	}
+	accrual.StartWorker(s.Storage)
 	return s
 }
 

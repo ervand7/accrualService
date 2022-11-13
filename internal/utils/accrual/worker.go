@@ -1,0 +1,132 @@
+package accrual
+
+import (
+	"encoding/json"
+	"fmt"
+	"github.com/ervand7/go-musthave-diploma-tpl/internal/config"
+	"github.com/ervand7/go-musthave-diploma-tpl/internal/database"
+	"github.com/ervand7/go-musthave-diploma-tpl/internal/logger"
+	"github.com/ervand7/go-musthave-diploma-tpl/internal/models"
+	"io"
+	"net/http"
+	"strconv"
+	"sync"
+	"time"
+)
+
+type accrualServerRespBody struct {
+	Order   string `json:"order"`
+	Status  string `json:"status"`
+	Accrual string `json:"accrual,omitempty"`
+}
+
+type Worker struct {
+	storage         *database.Storage
+	goroutinesCount int
+}
+
+func StartWorker(storage *database.Storage) {
+	worker := &Worker{
+		storage:         storage,
+		goroutinesCount: 5,
+	}
+	go worker.Run()
+}
+
+func (w Worker) Run() {
+	//w.waitDBCreate()
+	var lastID interface{}
+	for {
+		ch := make(chan int)
+		var wg sync.WaitGroup
+		for i := 0; i < w.goroutinesCount; i++ {
+			wg.Add(1)
+			go func(ch <-chan int) {
+				value := <-ch
+				if value != 0 {
+					w.actualizeOrder(value)
+				}
+				wg.Done()
+			}(ch)
+		}
+
+		orders, err := w.storage.FindOrdersToAccrual(lastID)
+		if err != nil {
+			logger.Logger.Fatal(err.Error())
+		}
+		if orders == nil {
+			lastID = nil
+		}
+		for _, val := range orders {
+			lastID = val
+			ch <- val
+		}
+
+		close(ch)
+		wg.Wait()
+	}
+}
+
+func (w Worker) actualizeOrder(orderID int) {
+	resp := w.requestAccrualServer(orderID)
+	id := w.prepareID(resp.Order)
+	status := w.prepareStatus(resp.Status)
+	accrual := w.prepareAccrual(resp.Accrual)
+	err := w.storage.UpdateOrderAndAccrual(id, status, accrual)
+	if err != nil {
+		logger.Logger.Error(err.Error())
+	}
+}
+
+func (w Worker) requestAccrualServer(orderID int) accrualServerRespBody {
+	for {
+		method := fmt.Sprintf("/api/orders/%d", orderID)
+		url := config.GetConfig().AccrualSystemAddress + method
+		resp, err := http.Get(url)
+		if err != nil {
+			logger.Logger.Fatal(err.Error())
+		}
+		if resp.StatusCode != http.StatusOK {
+			time.Sleep(time.Second)
+			logger.Logger.Warn(
+				fmt.Sprintf("order_id: %d resp %s", orderID, resp.Status))
+			continue
+		}
+
+		var body accrualServerRespBody
+		data, err := io.ReadAll(resp.Body)
+		if err != nil {
+			logger.Logger.Error(err.Error())
+		}
+		if err = json.Unmarshal(data, &body); err != nil {
+			logger.Logger.Error(err.Error())
+		}
+
+		resp.Body.Close()
+		return body
+	}
+}
+
+func (w Worker) waitDBCreate() {
+	time.Sleep(time.Second)
+}
+
+func (w Worker) prepareID(ID string) int {
+	result, err := strconv.Atoi(ID)
+	if err != nil {
+		logger.Logger.Error(err.Error())
+	}
+	return result
+}
+
+func (w Worker) prepareStatus(status string) models.OrderStatusValue {
+	if status == "REGISTERED" {
+		status = "NEW"
+	}
+	return models.OrderStatusValue(status).FromEnum()
+}
+
+func (w Worker) prepareAccrual(accrual string) float64 {
+	result, _ := strconv.ParseFloat(accrual, 64)
+	return result
+}

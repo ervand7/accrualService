@@ -19,8 +19,8 @@ func TestGetConfig_DefaultValues(t *testing.T) {
 
 	assert.NotContainsf(t, os.Args, "-r", "flag -r was set")
 	assert.Equal(t, os.Getenv("ACCRUAL_SYSTEM_ADDRESS"), "")
-	expectedAccrualSystemAddress := "localhost:8080"
-	assert.Equal(t, GetConfig().AccrualSystemAddress, expectedAccrualSystemAddress)
+	expectedAccrualSystemAddress := "http://127.0.0.1:8080"
+	assert.Equal(t, expectedAccrualSystemAddress, GetConfig().AccrualSystemAddress)
 }
 
 func TestGetConfig_EnvValues(t *testing.T) {
