@@ -4,6 +4,7 @@ import (
 	"context"
 	"crypto/sha256"
 	"fmt"
+	"github.com/ervand7/go-musthave-diploma-tpl/internal/config"
 	e "github.com/ervand7/go-musthave-diploma-tpl/internal/errors"
 	"github.com/ervand7/go-musthave-diploma-tpl/internal/models"
 	"github.com/google/uuid"
@@ -231,4 +232,25 @@ func TestCreateOrder_FailAlreadyCreatedByAnotherUser(t *testing.T) {
 	errData, ok := err.(*e.OrderAlreadyExistsError)
 	assert.True(t, ok)
 	assert.False(t, errData.FromCurrentUser)
+}
+
+func TestFindOrdersToAccrual_Success(t *testing.T) {
+	defer Downgrade()
+	storage := NewStorage()
+
+	userID := userIDFixture(storage, "1", "1", "1", t)
+	ctx := context.TODO()
+	for i := 0; i < 10; i++ {
+		err := storage.CreateOrder(ctx, rand.Intn(1000000), userID)
+		assert.NoError(t, err)
+	}
+
+	result, err := storage.FindOrdersToAccrual(nil)
+	assert.NoError(t, err)
+	assert.Equal(t, config.OrdersBatchSize, len(result))
+
+	lastID := result[len(result)-1]
+	result, err = storage.FindOrdersToAccrual(lastID)
+	assert.NoError(t, err)
+	assert.Equal(t, config.OrdersBatchSize, len(result))
 }

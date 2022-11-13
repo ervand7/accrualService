@@ -4,13 +4,13 @@ import (
 	"time"
 )
 
-type OrderStatusEnumValue string
+type OrderStatusValue string
 
 var OrderStatus = struct {
-	NEW        OrderStatusEnumValue
-	PROCESSING OrderStatusEnumValue
-	INVALID    OrderStatusEnumValue
-	PROCESSED  OrderStatusEnumValue
+	NEW        OrderStatusValue
+	PROCESSING OrderStatusValue
+	INVALID    OrderStatusValue
+	PROCESSED  OrderStatusValue
 }{
 	NEW:        "NEW",
 	PROCESSING: "PROCESSING",
@@ -18,9 +18,19 @@ var OrderStatus = struct {
 	PROCESSED:  "PROCESSED",
 }
 
+func (o OrderStatusValue) FromEnum() OrderStatusValue {
+	if o != OrderStatus.NEW &&
+		o != OrderStatus.PROCESSING &&
+		o != OrderStatus.PROCESSED &&
+		o != OrderStatus.INVALID {
+		return ""
+	}
+	return o
+}
+
 type Order struct {
 	ID         int
 	UserID     string
-	Status     OrderStatusEnumValue
+	Status     OrderStatusValue
 	UploadedAt time.Time
 }
