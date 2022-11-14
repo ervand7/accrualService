@@ -20,7 +20,7 @@ func loadOrder(
 	t *testing.T,
 ) {
 	router := chi.NewRouter()
-	router.HandleFunc("/api/user/orders", server.UserLoadOrders)
+	router.HandleFunc("/api/user/orders", server.LoadOrder)
 	writer := httptest.NewRecorder()
 	router.ServeHTTP(writer, request)
 
@@ -37,7 +37,7 @@ func createUser(login, password, token string, server Server, t *testing.T) {
 	assert.NoError(t, err)
 }
 
-func TestUserLoadOrders_Success(t *testing.T) {
+func TestLoadOrder_Success(t *testing.T) {
 	defer database.Downgrade()
 	apiMethod := "/api/user/orders"
 	var body = []byte("12345678903")
@@ -62,7 +62,7 @@ func TestUserLoadOrders_Success(t *testing.T) {
 	loadOrder(server, request, http.StatusOK, t)
 }
 
-func TestUserLoadOrders_400BadRequest(t *testing.T) {
+func TestLoadOrder_400BadRequest(t *testing.T) {
 	defer database.Downgrade()
 	request := httptest.NewRequest(
 		http.MethodPost,
@@ -77,7 +77,7 @@ func TestUserLoadOrders_400BadRequest(t *testing.T) {
 	loadOrder(server, request, http.StatusBadRequest, t)
 }
 
-func TestUserLoadOrders_401Unauthorized(t *testing.T) {
+func TestLoadOrder_401Unauthorized(t *testing.T) {
 	defer database.Downgrade()
 	request := httptest.NewRequest(
 		http.MethodPost,
@@ -89,7 +89,7 @@ func TestUserLoadOrders_401Unauthorized(t *testing.T) {
 	loadOrder(server, request, http.StatusUnauthorized, t)
 }
 
-func TestUserLoadOrders_409Conflict(t *testing.T) {
+func TestLoadOrder_409Conflict(t *testing.T) {
 	defer database.Downgrade()
 	apiMethod := "/api/user/orders"
 	var body = []byte("12345678903")
@@ -116,7 +116,7 @@ func TestUserLoadOrders_409Conflict(t *testing.T) {
 	loadOrder(server, request, http.StatusConflict, t)
 }
 
-func TestUserLoadOrders_422InvalidOrderNumber(t *testing.T) {
+func TestLoadOrder_422InvalidOrderNumber(t *testing.T) {
 	defer database.Downgrade()
 	request := httptest.NewRequest(
 		http.MethodPost,

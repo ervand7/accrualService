@@ -10,8 +10,8 @@ import (
 	"net/http"
 )
 
-// UserLogin /api/user/login
-func (server *Server) UserLogin(w http.ResponseWriter, r *http.Request) {
+// Login /api/user/login
+func (server *Server) Login(w http.ResponseWriter, r *http.Request) {
 	defer server.CloseBody(r)
 	body, err := io.ReadAll(r.Body)
 	if err != nil {

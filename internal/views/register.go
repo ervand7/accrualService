@@ -10,8 +10,8 @@ import (
 	"net/http"
 )
 
-// UserRegister /api/user/register
-func (server *Server) UserRegister(w http.ResponseWriter, r *http.Request) {
+// Register /api/user/register
+func (server *Server) Register(w http.ResponseWriter, r *http.Request) {
 	defer server.CloseBody(r)
 	body, err := io.ReadAll(r.Body)
 	if err != nil {

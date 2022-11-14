@@ -13,27 +13,6 @@ import (
 	"testing"
 )
 
-func userIDFixture(
-	storage *Storage, login, password, token string, t *testing.T,
-) (userID string) {
-	rows, err := storage.db.Conn.Query(`
-		insert into "public"."user" ("login", "password", "token") values
-		($1, $2, $3) returning "user"."id"
-		`, login, password, token,
-	)
-	assert.NoError(t, err)
-	defer storage.db.CloseRows(rows)
-
-	for rows.Next() {
-		err = rows.Scan(&userID)
-		assert.NoError(t, err)
-	}
-	err = rows.Err()
-	assert.NoError(t, err)
-
-	return userID
-}
-
 func TestCreateUser_Success(t *testing.T) {
 	defer Downgrade()
 	storage := NewStorage()
@@ -142,26 +121,26 @@ func TestUpdateToken_FailUserNotFound(t *testing.T) {
 	assert.Equal(t, resultToken, "")
 }
 
-func TestGetUserIDByToken_Success(t *testing.T) {
+func TestGetUserByToken_Success(t *testing.T) {
 	defer Downgrade()
 	storage := NewStorage()
 
 	ctx := context.TODO()
 	token := "1"
-	userID := userIDFixture(storage, "1", "1", token, t)
+	userID := UserIDFixture(storage, "1", "1", token, t)
 
-	result, err := storage.GetUserIDByToken(ctx, token)
+	result, err := storage.GetUserByToken(ctx, token)
 	assert.NoError(t, err)
 	assert.Equal(t, userID, result)
 }
 
-func TestGetUserIDByToken_FailNotFound(t *testing.T) {
+func TestGetUserByToken_FailNotFound(t *testing.T) {
 	defer Downgrade()
 	storage := NewStorage()
 
 	ctx := context.TODO()
 	token := "hello"
-	result, err := storage.GetUserIDByToken(ctx, token)
+	result, err := storage.GetUserByToken(ctx, token)
 	assert.NoError(t, err)
 	assert.Empty(t, result)
 }
@@ -172,7 +151,7 @@ func TestCreateOrder_Success(t *testing.T) {
 
 	ctx := context.TODO()
 	number := rand.Intn(1000000)
-	userID := userIDFixture(storage, "1", "1", "1", t)
+	userID := UserIDFixture(storage, "1", "1", "1", t)
 	err := storage.CreateOrder(ctx, number, userID)
 	assert.NoError(t, err)
 
@@ -206,7 +185,7 @@ func TestCreateOrder_FailAlreadyCreatedByCurrentUser(t *testing.T) {
 
 	ctx := context.TODO()
 	number := rand.Intn(1000000)
-	userID := userIDFixture(storage, "1", "1", "1", t)
+	userID := UserIDFixture(storage, "1", "1", "1", t)
 
 	err := storage.CreateOrder(ctx, number, userID)
 	assert.NoError(t, err)
@@ -223,11 +202,11 @@ func TestCreateOrder_FailAlreadyCreatedByAnotherUser(t *testing.T) {
 
 	ctx := context.TODO()
 	number := rand.Intn(1000000)
-	userID := userIDFixture(storage, "1", "1", "1", t)
+	userID := UserIDFixture(storage, "1", "1", "1", t)
 	err := storage.CreateOrder(ctx, number, userID)
 	assert.NoError(t, err)
 
-	userID = userIDFixture(storage, "2", "2", "2", t)
+	userID = UserIDFixture(storage, "2", "2", "2", t)
 	err = storage.CreateOrder(ctx, number, userID)
 	errData, ok := err.(*e.OrderAlreadyExistsError)
 	assert.True(t, ok)
@@ -238,7 +217,7 @@ func TestFindOrdersToAccrual_Success(t *testing.T) {
 	defer Downgrade()
 	storage := NewStorage()
 
-	userID := userIDFixture(storage, "1", "1", "1", t)
+	userID := UserIDFixture(storage, "1", "1", "1", t)
 	ctx := context.TODO()
 	for i := 0; i < 10; i++ {
 		err := storage.CreateOrder(ctx, rand.Intn(1000000), userID)
@@ -253,4 +232,33 @@ func TestFindOrdersToAccrual_Success(t *testing.T) {
 	result, err = storage.FindOrdersToAccrual(lastID)
 	assert.NoError(t, err)
 	assert.Equal(t, config.OrdersBatchSize, len(result))
+}
+
+func TestGetUserOrders_Success(t *testing.T) {
+	defer Downgrade()
+	storage := NewStorage()
+
+	userID := UserIDFixture(storage, "1", "1", "1", t)
+	ctx := context.TODO()
+	accrual := 11.1
+	for i := 0; i < 10; i++ {
+		orderID := rand.Intn(1000000)
+		err := storage.CreateOrder(ctx, orderID, userID)
+		assert.NoError(t, err)
+		if i%2 == 0 {
+			query := `insert into "public"."accrual" ("order_id", "user_id", "amount") 
+			values ($1, $2, $3);`
+			storage.db.Conn.QueryRow(query, orderID, userID, accrual)
+		}
+	}
+
+	result, err := storage.GetUserOrders(ctx, userID)
+	assert.NoError(t, err)
+	for index, orderInfo := range result {
+		if index%2 == 0 {
+			assert.Equal(t, accrual, *orderInfo.Accrual)
+		} else {
+			assert.Nil(t, orderInfo.Accrual)
+		}
+	}
 }

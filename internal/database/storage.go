@@ -66,32 +66,6 @@ func (storage *Storage) CreateUser(
 	return nil
 }
 
-func (storage *Storage) UpdateToken(
-	ctx context.Context, login, password, newToken string,
-) error {
-	hashedPassword := fmt.Sprintf("%x", sha256.Sum256([]byte(password)))
-	query := `
-		update "public"."user" set "token" = $3
-		where "login" = $1 and "password" = $2
-		returning "token";
-	`
-	rows, err := storage.db.Conn.QueryContext(
-		ctx, query, login, hashedPassword, newToken,
-	)
-	if err != nil {
-		return err
-	}
-	setToken, err := getValueFromRows(storage, rows)
-	if err != nil {
-		return err
-	}
-	if setToken == "" {
-		return e.NewUserNotFoundError(login, password)
-	}
-
-	return nil
-}
-
 func (storage *Storage) CreateOrder(
 	ctx context.Context, orderNumber int, userID string,
 ) error {
@@ -140,7 +114,33 @@ func (storage *Storage) CreateOrder(
 	return nil
 }
 
-func (storage *Storage) GetUserIDByToken(
+func (storage *Storage) UpdateToken(
+	ctx context.Context, login, password, newToken string,
+) error {
+	hashedPassword := fmt.Sprintf("%x", sha256.Sum256([]byte(password)))
+	query := `
+		update "public"."user" set "token" = $3
+		where "login" = $1 and "password" = $2
+		returning "token";
+	`
+	rows, err := storage.db.Conn.QueryContext(
+		ctx, query, login, hashedPassword, newToken,
+	)
+	if err != nil {
+		return err
+	}
+	setToken, err := getValueFromRows(storage, rows)
+	if err != nil {
+		return err
+	}
+	if setToken == "" {
+		return e.NewUserNotFoundError(login, password)
+	}
+
+	return nil
+}
+
+func (storage *Storage) GetUserByToken(
 	ctx context.Context, token string,
 ) (userID string, err error) {
 	query := `
@@ -159,7 +159,49 @@ func (storage *Storage) GetUserIDByToken(
 	return userID, nil
 }
 
-func (storage *Storage) FindOrdersToAccrual(lastID interface{}) (orders []int, err error) {
+func (storage *Storage) GetUserOrders(
+	ctx context.Context, userID string,
+) (data []models.OrderInfo, err error) {
+	query := `
+		select "order"."id", 
+			   "order"."status", 
+			   "accrual"."amount", 
+			   "order"."uploaded_at"::timestamptz 
+		from "order" 
+				 left outer join "accrual" on "order"."id" = "accrual"."order_id" 
+		where "order"."user_id" = $1 
+		order by "uploaded_at"; 
+	`
+	rows, err := storage.db.Conn.QueryContext(ctx, query, userID)
+	if err != nil {
+		return nil, err
+	}
+	defer storage.db.CloseRows(rows)
+
+	var orderInfo models.OrderInfo
+	for rows.Next() {
+		err = rows.Scan(
+			&orderInfo.Number,
+			&orderInfo.Status,
+			&orderInfo.Accrual,
+			&orderInfo.UploadedAt,
+		)
+		if err != nil {
+			return nil, err
+		}
+		data = append(data, orderInfo)
+	}
+	err = rows.Err()
+	if err != nil {
+		return nil, err
+	}
+
+	return data, nil
+}
+
+func (storage *Storage) FindOrdersToAccrual(
+	lastID interface{},
+) (orders []int, err error) {
 	var lastIDCondition string
 	if lastID != nil {
 		lastIDCondition = fmt.Sprintf(` and "id" > %d `, lastID)

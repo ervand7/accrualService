@@ -1,4 +1,4 @@
-package accrual
+package utils
 
 import (
 	"encoding/json"
@@ -15,9 +15,9 @@ import (
 )
 
 type accrualServerRespBody struct {
-	Order   string `json:"order"`
-	Status  string `json:"status"`
-	Accrual string `json:"accrual,omitempty"`
+	Order   string  `json:"order"`
+	Status  string  `json:"status"`
+	Accrual float64 `json:"accrual,omitempty"`
 }
 
 type Worker struct {
@@ -34,7 +34,7 @@ func StartWorker(storage *database.Storage) {
 }
 
 func (w Worker) Run() {
-	w.waitDBCreate()
+	w.waitCreateDB()
 	var lastID interface{}
 	for {
 		ch := make(chan int)
@@ -71,7 +71,7 @@ func (w Worker) actualizeOrder(orderID int) {
 	resp := w.requestAccrualServer(orderID)
 	id := w.prepareID(resp.Order)
 	status := w.prepareStatus(resp.Status)
-	accrual := w.prepareAccrual(resp.Accrual)
+	accrual := resp.Accrual
 	err := w.storage.UpdateOrderAndAccrual(id, status, accrual)
 	if err != nil {
 		logger.Logger.Error(err.Error())
@@ -107,7 +107,7 @@ func (w Worker) requestAccrualServer(orderID int) accrualServerRespBody {
 	}
 }
 
-func (w Worker) waitDBCreate() {
+func (w Worker) waitCreateDB() {
 	time.Sleep(time.Second)
 }
 
@@ -124,9 +124,4 @@ func (w Worker) prepareStatus(status string) models.OrderStatusValue {
 		status = "NEW"
 	}
 	return models.OrderStatusValue(status).FromEnum()
-}
-
-func (w Worker) prepareAccrual(accrual string) float64 {
-	result, _ := strconv.ParseFloat(accrual, 64)
-	return result
 }
