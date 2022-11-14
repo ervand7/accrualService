@@ -18,7 +18,7 @@ create table if not exists "user"
 create table if not exists "order"
 (
     "id"          bigint                      not null
-        unique,
+        unique primary key,
     "user_id"     uuid                        not null,
     "status"      "order_status"              not null,
     "uploaded_at" timestamp without time zone not null default now()
@@ -44,7 +44,7 @@ alter table only "public"."accrual"
     add constraint "fk_order_id" foreign key ("order_id")
         references "public"."order" ("id") on delete cascade;
 
-create table if not exists "withdrawal"
+create table if not exists "withdrawn"
 (
     "order_id"     bigint                      not null primary key
         unique,
@@ -53,7 +53,7 @@ create table if not exists "withdrawal"
     "processed_at" timestamp without time zone not null default now()
 );
 
-alter table only "public"."withdrawal"
+alter table only "public"."withdrawn"
     add constraint "fk_order_id" foreign key ("order_id")
         references "public"."order" ("id") on delete cascade;
 
@@ -65,5 +65,5 @@ SELECT 'down SQL query';
 drop table if exists "user" cascade;
 drop table if exists "order" cascade;
 drop table if exists "accrual" cascade;
-drop table if exists "withdrawal" cascade;
+drop table if exists "withdrawn" cascade;
 drop type if exists "order_status";

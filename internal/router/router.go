@@ -19,7 +19,8 @@ func newRouter() chi.Router {
 		r.Post("/api/user/register", server.Register)
 		r.Post("/api/user/login", server.Login)
 		r.Post("/api/user/orders", server.LoadOrder)
-		r.Get("/api/user/orders", server.GetOrders)
+		r.Get("/api/user/orders", server.GetUserOrders)
+		r.Get("/api/user/balance", server.UserBalance)
 	})
 
 	return r

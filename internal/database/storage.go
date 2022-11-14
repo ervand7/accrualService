@@ -278,3 +278,36 @@ func (storage *Storage) UpdateOrderAndAccrual(
 
 	return transaction.Commit()
 }
+
+func (storage *Storage) GetUserBalance(
+	ctx context.Context, userID string,
+) (balance map[string]float64, err error) {
+	var accrualSum, withdrawnSum float64
+	balance = map[string]float64{
+		"accrual":   accrualSum,
+		"withdrawn": withdrawnSum,
+	}
+
+	for tableName, result := range balance {
+		query := storage.db.Conn.QueryRowContext(
+			ctx,
+			fmt.Sprintf(`select sum("amount") from %s where "user_id" = $1 
+			   group by "user_id";`, tableName,
+			),
+			userID,
+		)
+		err = query.Scan(&result)
+		if err != nil {
+			if err == sql.ErrNoRows {
+				accrualSum = 0
+			} else {
+				return nil, err
+			}
+		}
+		balance[tableName] = result
+	}
+
+	balance["current"] = balance["accrual"]
+	delete(balance, "accrual")
+	return balance, nil
+}
