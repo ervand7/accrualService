@@ -6,8 +6,8 @@ import (
 	"net/http"
 )
 
-// GetOrders /api/user/orders
-func (server *Server) GetOrders(w http.ResponseWriter, r *http.Request) {
+// GetUserOrders /api/user/orders
+func (server *Server) GetUserOrders(w http.ResponseWriter, r *http.Request) {
 	ctx, cancel := context.WithTimeout(r.Context(), CtxSecond)
 	defer cancel()
 	userID := server.GetUserIDFromRequest(ctx, r)

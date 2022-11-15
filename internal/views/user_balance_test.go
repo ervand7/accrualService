@@ -12,13 +12,12 @@ import (
 	"io"
 	"net/http"
 	"net/http/httptest"
-	"strconv"
 	"testing"
 )
 
-func TestGetUserOrders_200Success(t *testing.T) {
+func TestUserBalance_200Success(t *testing.T) {
 	defer database.Downgrade()
-	apiMethod := "/api/user/orders"
+	apiMethod := "/api/user/balance"
 	request := httptest.NewRequest(
 		http.MethodGet,
 		apiMethod,
@@ -37,7 +36,7 @@ func TestGetUserOrders_200Success(t *testing.T) {
 	}
 
 	router := chi.NewRouter()
-	router.HandleFunc(apiMethod, server.GetUserOrders)
+	router.HandleFunc(apiMethod, server.UserBalance)
 	writer := httptest.NewRecorder()
 	router.ServeHTTP(writer, request)
 
@@ -46,51 +45,25 @@ func TestGetUserOrders_200Success(t *testing.T) {
 
 	bodyRaw, err := io.ReadAll(response.Body)
 	assert.NoError(t, err)
-	var respBodyData []map[string]interface{}
+	var respBodyData map[string]float64
 	err = json.Unmarshal(bodyRaw, &respBodyData)
 	assert.NoError(t, err)
-	assert.Len(t, respBodyData, len(ordersNumbers))
-
-	for index, value := range respBodyData {
-		assert.Equal(
-			t,
-			strconv.Itoa(ordersNumbers[index]),
-			value["number"],
-		)
-	}
+	assert.Equal(
+		t,
+		map[string]float64{
+			"current":   0,
+			"withdrawn": 0,
+		},
+		respBodyData,
+	)
 
 	err = response.Body.Close()
 	require.NoError(t, err)
 }
 
-func TestGetUserOrders_204Success(t *testing.T) {
+func TestUserBalance_401Unauthorized(t *testing.T) {
 	defer database.Downgrade()
-	apiMethod := "/api/user/orders"
-	request := httptest.NewRequest(
-		http.MethodGet,
-		apiMethod,
-		bytes.NewBuffer([]byte("")),
-	)
-
-	server := NewServer()
-	token := uuid.New().String()
-	server.SetCookieToRequest(token, request)
-	database.UserIDFixture(server.Storage, "1", "1", token, t)
-
-	router := chi.NewRouter()
-	router.HandleFunc(apiMethod, server.GetUserOrders)
-	writer := httptest.NewRecorder()
-	router.ServeHTTP(writer, request)
-
-	response := writer.Result()
-	assert.Equal(t, http.StatusNoContent, response.StatusCode)
-	err := response.Body.Close()
-	require.NoError(t, err)
-}
-
-func TestGetUserOrders_401Unauthorized(t *testing.T) {
-	defer database.Downgrade()
-	apiMethod := "/api/user/orders"
+	apiMethod := "/api/user/balance"
 	request := httptest.NewRequest(
 		http.MethodGet,
 		apiMethod,
@@ -99,7 +72,7 @@ func TestGetUserOrders_401Unauthorized(t *testing.T) {
 
 	server := NewServer()
 	router := chi.NewRouter()
-	router.HandleFunc(apiMethod, server.GetUserOrders)
+	router.HandleFunc(apiMethod, server.UserBalance)
 	writer := httptest.NewRecorder()
 	router.ServeHTTP(writer, request)
 

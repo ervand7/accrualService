@@ -6,7 +6,7 @@ import (
 	"fmt"
 	"github.com/ervand7/go-musthave-diploma-tpl/internal/config"
 	e "github.com/ervand7/go-musthave-diploma-tpl/internal/errors"
-	"github.com/ervand7/go-musthave-diploma-tpl/internal/models"
+	m "github.com/ervand7/go-musthave-diploma-tpl/internal/models"
 	"github.com/google/uuid"
 	"github.com/stretchr/testify/assert"
 	"math/rand"
@@ -27,7 +27,7 @@ func TestCreateUser_Success(t *testing.T) {
 	assert.NoError(t, err)
 	defer storage.db.CloseRows(rows)
 
-	var user models.User
+	var user m.User
 	for rows.Next() {
 		err = rows.Scan(&user.ID, &user.Login, &user.Password, &user.Token)
 		assert.NoError(t, err)
@@ -163,7 +163,7 @@ func TestCreateOrder_Success(t *testing.T) {
 	assert.NoError(t, err)
 	defer storage.db.CloseRows(rows)
 
-	var order models.Order
+	var order m.Order
 	for rows.Next() {
 		err = rows.Scan(
 			&order.ID, &order.UserID, &order.Status, &order.UploadedAt,
@@ -175,7 +175,7 @@ func TestCreateOrder_Success(t *testing.T) {
 
 	assert.Equal(t, number, order.ID)
 	assert.Equal(t, userID, order.UserID)
-	assert.Equal(t, models.OrderStatus.NEW, order.Status)
+	assert.Equal(t, m.OrderStatus.NEW, order.Status)
 	assert.NotNil(t, order.UploadedAt)
 }
 
@@ -234,6 +234,30 @@ func TestFindOrdersToAccrual_Success(t *testing.T) {
 	assert.Equal(t, config.OrdersBatchSize, len(result))
 }
 
+func TestFindOrdersToAccrual_FailNoOrdersWithAppropriateStatus(t *testing.T) {
+	defer Downgrade()
+	storage := NewStorage()
+
+	userID := UserIDFixture(storage, "1", "1", "1", t)
+	statuses := []m.OrderStatusValue{
+		m.OrderStatus.PROCESSED, m.OrderStatus.INVALID,
+	}
+	for _, status := range statuses {
+		query := `
+			insert into "public"."order" ("id", "user_id", "status") values ($1, $2, $3);
+		`
+		storage.db.Conn.QueryRow(query, rand.Intn(1000000), userID, status)
+	}
+	ctx := context.TODO()
+	orders, err := storage.GetUserOrders(ctx, userID)
+	assert.NoError(t, err)
+	assert.Equal(t, len(statuses), len(orders))
+
+	result, err := storage.FindOrdersToAccrual(nil)
+	assert.NoError(t, err)
+	assert.Nil(t, result)
+}
+
 func TestGetUserOrders_Success(t *testing.T) {
 	defer Downgrade()
 	storage := NewStorage()
@@ -261,4 +285,67 @@ func TestGetUserOrders_Success(t *testing.T) {
 			assert.Nil(t, orderInfo.Accrual)
 		}
 	}
+}
+
+func TestGetUserOrders_SuccessNoOrders(t *testing.T) {
+	defer Downgrade()
+	storage := NewStorage()
+
+	userID := UserIDFixture(storage, "1", "1", "1", t)
+	ctx := context.TODO()
+	result, err := storage.GetUserOrders(ctx, userID)
+	assert.NoError(t, err)
+	assert.Nil(t, result)
+}
+
+func TestGetUserBalance_Success(t *testing.T) {
+	defer Downgrade()
+	storage := NewStorage()
+
+	userID := UserIDFixture(storage, "1", "1", "1", t)
+	ctx := context.TODO()
+	amount := 11.1
+	for i := 0; i < 10; i++ {
+		orderID := rand.Intn(1000000)
+		err := storage.CreateOrder(ctx, orderID, userID)
+		assert.NoError(t, err)
+		if i%2 == 0 {
+			query := `insert into "public"."accrual" ("order_id", "user_id", "amount") 
+			values ($1, $2, $3);`
+			storage.db.Conn.QueryRow(query, orderID, userID, amount)
+		} else {
+			query := `insert into "public"."withdrawn" ("order_id", "user_id", "amount") 
+			values ($1, $2, $3);`
+			storage.db.Conn.QueryRow(query, orderID, userID, amount)
+		}
+	}
+
+	result, err := storage.GetUserBalance(ctx, userID)
+	assert.NoError(t, err)
+	assert.Equal(
+		t,
+		map[string]float64{
+			"current":   amount * 5,
+			"withdrawn": amount * 5,
+		},
+		result,
+	)
+}
+
+func TestGetUserBalance_SuccessNoOrders(t *testing.T) {
+	defer Downgrade()
+	storage := NewStorage()
+
+	userID := UserIDFixture(storage, "1", "1", "1", t)
+	ctx := context.TODO()
+	result, err := storage.GetUserBalance(ctx, userID)
+	assert.NoError(t, err)
+	assert.Equal(
+		t,
+		map[string]float64{
+			"current":   0,
+			"withdrawn": 0,
+		},
+		result,
+	)
 }
