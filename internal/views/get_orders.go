@@ -10,7 +10,7 @@ import (
 func (server *Server) GetUserOrders(w http.ResponseWriter, r *http.Request) {
 	ctx, cancel := context.WithTimeout(r.Context(), CtxSecond)
 	defer cancel()
-	userID := server.GetUserIDFromRequest(ctx, r)
+	userID := server.GetRequestUserID(ctx, r)
 	if userID == "" {
 		http.Error(w, "not authorized", http.StatusUnauthorized)
 		return

@@ -27,7 +27,7 @@ func TestGetUserOrders_200Success(t *testing.T) {
 
 	server := NewServer()
 	token := uuid.New().String()
-	server.SetCookieToRequest(token, request)
+	server.SetRequestCookie(token, request)
 	userID := database.UserIDFixture(server.Storage, "1", "1", token, t)
 	ctx := context.TODO()
 	ordersNumbers := []int{2200135834, 1169934492}
@@ -74,7 +74,7 @@ func TestGetUserOrders_204Success(t *testing.T) {
 
 	server := NewServer()
 	token := uuid.New().String()
-	server.SetCookieToRequest(token, request)
+	server.SetRequestCookie(token, request)
 	database.UserIDFixture(server.Storage, "1", "1", token, t)
 
 	router := chi.NewRouter()

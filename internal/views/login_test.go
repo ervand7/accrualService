@@ -32,7 +32,7 @@ func TestLogin_200Success(t *testing.T) {
 
 	server := NewServer()
 	oldToken := uuid.New().String()
-	server.SetCookieToRequest(oldToken, request)
+	server.SetRequestCookie(oldToken, request)
 
 	err := server.Storage.CreateUser(
 		context.TODO(), login, password, oldToken,

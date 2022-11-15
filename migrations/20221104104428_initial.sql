@@ -53,11 +53,6 @@ create table if not exists "withdrawn"
     "processed_at" timestamp without time zone not null default now()
 );
 
-alter table only "public"."withdrawn"
-    add constraint "fk_order_id" foreign key ("order_id")
-        references "public"."order" ("id") on delete cascade;
-
-
 -- +goose Down
 -- +goose StatementBegin
 SELECT 'down SQL query';

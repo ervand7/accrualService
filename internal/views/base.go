@@ -24,19 +24,19 @@ func NewServer() Server {
 	return s
 }
 
-func (server Server) SetCookieToResponse(token string, w http.ResponseWriter) {
+func (server Server) SetResponseCookie(token string, w http.ResponseWriter) {
 	encoded := hex.EncodeToString([]byte(token))
 	cookie := &http.Cookie{Name: "auth_token", Value: encoded, HttpOnly: true}
 	http.SetCookie(w, cookie)
 }
 
-func (server Server) SetCookieToRequest(token string, r *http.Request) {
+func (server Server) SetRequestCookie(token string, r *http.Request) {
 	encoded := hex.EncodeToString([]byte(token))
 	cookie := &http.Cookie{Name: "auth_token", Value: encoded, HttpOnly: true}
 	r.AddCookie(cookie)
 }
 
-func (server Server) GetUserIDFromRequest(
+func (server Server) GetRequestUserID(
 	ctx context.Context, r *http.Request,
 ) (userID string) {
 	data, err := r.Cookie("auth_token")

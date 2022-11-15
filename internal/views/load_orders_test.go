@@ -49,7 +49,7 @@ func TestLoadOrder_Success(t *testing.T) {
 
 	server := NewServer()
 	token := uuid.New().String()
-	server.SetCookieToRequest(token, request)
+	server.SetRequestCookie(token, request)
 	createUser("1", "2", token, server, t)
 	loadOrder(server, request, http.StatusAccepted, t)
 
@@ -58,7 +58,7 @@ func TestLoadOrder_Success(t *testing.T) {
 		apiMethod,
 		bytes.NewBuffer(body),
 	)
-	server.SetCookieToRequest(token, request)
+	server.SetRequestCookie(token, request)
 	loadOrder(server, request, http.StatusOK, t)
 }
 
@@ -72,7 +72,7 @@ func TestLoadOrder_400BadRequest(t *testing.T) {
 
 	server := NewServer()
 	token := uuid.New().String()
-	server.SetCookieToRequest(token, request)
+	server.SetRequestCookie(token, request)
 	createUser("1", "2", token, server, t)
 	loadOrder(server, request, http.StatusBadRequest, t)
 }
@@ -101,7 +101,7 @@ func TestLoadOrder_409Conflict(t *testing.T) {
 		apiMethod,
 		bytes.NewBuffer(body),
 	)
-	server.SetCookieToRequest(token, request)
+	server.SetRequestCookie(token, request)
 	createUser("hello", "world", token, server, t)
 	loadOrder(server, request, http.StatusAccepted, t)
 
@@ -111,7 +111,7 @@ func TestLoadOrder_409Conflict(t *testing.T) {
 		apiMethod,
 		bytes.NewBuffer(body),
 	)
-	server.SetCookieToRequest(token, request)
+	server.SetRequestCookie(token, request)
 	createUser("world", "hello", token, server, t)
 	loadOrder(server, request, http.StatusConflict, t)
 }
@@ -126,7 +126,7 @@ func TestLoadOrder_422InvalidOrderNumber(t *testing.T) {
 
 	server := NewServer()
 	token := uuid.New().String()
-	server.SetCookieToRequest(token, request)
+	server.SetRequestCookie(token, request)
 	createUser("1", "2", token, server, t)
 	loadOrder(server, request, http.StatusUnprocessableEntity, t)
 }

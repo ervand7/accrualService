@@ -5,8 +5,8 @@ import (
 	"fmt"
 	"github.com/ervand7/go-musthave-diploma-tpl/internal/config"
 	"github.com/ervand7/go-musthave-diploma-tpl/internal/database"
+	"github.com/ervand7/go-musthave-diploma-tpl/internal/enum"
 	"github.com/ervand7/go-musthave-diploma-tpl/internal/logger"
-	"github.com/ervand7/go-musthave-diploma-tpl/internal/models"
 	"io"
 	"net/http"
 	"strconv"
@@ -119,9 +119,9 @@ func (w Worker) prepareID(ID string) int {
 	return result
 }
 
-func (w Worker) prepareStatus(status string) models.OrderStatusValue {
+func (w Worker) prepareStatus(status string) enum.OrderStatusValue {
 	if status == "REGISTERED" {
 		status = "NEW"
 	}
-	return models.OrderStatusValue(status).FromEnum()
+	return enum.OrderStatusValue(status).FromEnum()
 }
