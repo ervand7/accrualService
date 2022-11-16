@@ -1,8 +1,4 @@
-package models
-
-import (
-	"time"
-)
+package enum
 
 type OrderStatusValue string
 
@@ -26,18 +22,4 @@ func (o OrderStatusValue) FromEnum() OrderStatusValue {
 		return ""
 	}
 	return o
-}
-
-type Order struct {
-	ID         int
-	UserID     string
-	Status     OrderStatusValue
-	UploadedAt time.Time
-}
-
-type OrderInfo struct {
-	Number     string    `json:"number"`
-	Status     string    `json:"status"`
-	Accrual    *float64  `json:"accrual,omitempty"`
-	UploadedAt time.Time `json:"uploaded_at"`
 }

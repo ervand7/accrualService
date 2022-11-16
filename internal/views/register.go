@@ -50,7 +50,7 @@ func (server *Server) Register(w http.ResponseWriter, r *http.Request) {
 			return
 		}
 	} else {
-		server.SetCookieToResponse(token, w)
+		server.SetResponseCookie(token, w)
 	}
 
 	w.Header().Add("Content-type", "text/plain; charset=utf-8")

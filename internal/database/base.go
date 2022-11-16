@@ -18,6 +18,18 @@ type database struct {
 	Conn *sql.DB
 }
 
+type Storage struct {
+	db database
+}
+
+func NewStorage() *Storage {
+	db := database{}
+	db.Run()
+	return &Storage{
+		db: db,
+	}
+}
+
 func (db *database) Run() {
 	err := db.ConnStart()
 	if err != nil {
