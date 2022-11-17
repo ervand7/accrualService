@@ -2,7 +2,6 @@ package database
 
 import (
 	"context"
-	"github.com/ervand7/go-musthave-diploma-tpl/internal/enum"
 	e "github.com/ervand7/go-musthave-diploma-tpl/internal/errors"
 	"github.com/stretchr/testify/assert"
 	"math/rand"
@@ -31,7 +30,7 @@ func TestCreateOrder_Success(t *testing.T) {
 	var order struct {
 		ID         int
 		UserID     string
-		Status     enum.OrderStatusValue
+		Status     OrderStatusValue
 		UploadedAt time.Time
 	}
 	for rows.Next() {
@@ -45,7 +44,7 @@ func TestCreateOrder_Success(t *testing.T) {
 
 	assert.Equal(t, number, order.ID)
 	assert.Equal(t, userID, order.UserID)
-	assert.Equal(t, enum.OrderStatus.NEW, order.Status)
+	assert.Equal(t, OrderStatus.NEW, order.Status)
 	assert.NotNil(t, order.UploadedAt)
 }
 
@@ -81,4 +80,44 @@ func TestCreateOrder_FailAlreadyCreatedByAnotherUser(t *testing.T) {
 	errData, ok := err.(*e.OrderAlreadyExistsError)
 	assert.True(t, ok)
 	assert.False(t, errData.FromCurrentUser)
+}
+
+func TestGetUserOrders_Success(t *testing.T) {
+	defer Downgrade()
+	storage := NewStorage()
+
+	userID := UserIDFixture(storage, "1", "1", "1", t)
+	ctx := context.TODO()
+	amount := 11.1
+	for i := 0; i < 10; i++ {
+		orderID := rand.Intn(1000000)
+		err := storage.CreateOrder(ctx, orderID, userID)
+		assert.NoError(t, err)
+		if i%2 == 0 {
+			query := `insert into "public"."accrual" ("order_id", "user_id", "amount") 
+			values ($1, $2, $3);`
+			storage.db.Conn.QueryRow(query, orderID, userID, amount)
+		}
+	}
+
+	userOrders, err := storage.GetUserOrders(ctx, userID)
+	assert.NoError(t, err)
+	for index, order := range userOrders {
+		if index%2 == 0 {
+			assert.Equal(t, amount, *order.Accrual)
+		} else {
+			assert.Nil(t, order.Accrual)
+		}
+	}
+}
+
+func TestGetUserOrders_SuccessNoOrders(t *testing.T) {
+	defer Downgrade()
+	storage := NewStorage()
+
+	userID := UserIDFixture(storage, "1", "1", "1", t)
+	ctx := context.TODO()
+	result, err := storage.GetUserOrders(ctx, userID)
+	assert.NoError(t, err)
+	assert.Nil(t, result)
 }

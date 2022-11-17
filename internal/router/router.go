@@ -22,6 +22,7 @@ func newRouter() chi.Router {
 		r.Get("/api/user/orders", server.GetUserOrders)
 		r.Get("/api/user/balance", server.UserBalance)
 		r.Post("/api/user/balance/withdraw", server.Withdraw)
+		r.Get("/api/user/withdrawals", server.GetUserWithdrawals)
 	})
 
 	return r
