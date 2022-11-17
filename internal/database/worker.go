@@ -3,7 +3,6 @@ package database
 import (
 	"fmt"
 	"github.com/ervand7/go-musthave-diploma-tpl/internal/config"
-	"github.com/ervand7/go-musthave-diploma-tpl/internal/enum"
 )
 
 func (storage *Storage) FindOrdersToAccrual(
@@ -42,7 +41,7 @@ func (storage *Storage) FindOrdersToAccrual(
 }
 
 func (storage *Storage) UpdateOrderAndAccrual(
-	id int, status enum.OrderStatusValue, accrual float64,
+	id int, status OrderStatusValue, accrual float64,
 ) error {
 	transaction, err := storage.db.Conn.Begin()
 	if err != nil {

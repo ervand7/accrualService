@@ -3,7 +3,6 @@ package database
 import (
 	"context"
 	"github.com/ervand7/go-musthave-diploma-tpl/internal/config"
-	"github.com/ervand7/go-musthave-diploma-tpl/internal/enum"
 	"github.com/stretchr/testify/assert"
 	"math/rand"
 	"testing"
@@ -35,8 +34,8 @@ func TestFindOrdersToAccrual_FailNoOrders(t *testing.T) {
 	storage := NewStorage()
 
 	userID := UserIDFixture(storage, "1", "1", "1", t)
-	statuses := []enum.OrderStatusValue{
-		enum.OrderStatus.PROCESSED, enum.OrderStatus.INVALID,
+	statuses := []OrderStatusValue{
+		OrderStatus.PROCESSED, OrderStatus.INVALID,
 	}
 	for _, status := range statuses {
 		query := `

@@ -6,15 +6,7 @@ import (
 	"database/sql"
 	"fmt"
 	e "github.com/ervand7/go-musthave-diploma-tpl/internal/errors"
-	"time"
 )
-
-type orderInfo struct {
-	Number     string    `json:"number"`
-	Status     string    `json:"status"`
-	Accrual    *float64  `json:"accrual,omitempty"`
-	UploadedAt time.Time `json:"uploaded_at"`
-}
 
 func getValueFromRows(
 	storage *Storage, rows *sql.Rows,
@@ -58,46 +50,6 @@ func (storage *Storage) CreateUser(
 	}
 
 	return nil
-}
-
-func (storage *Storage) GetUserOrders(
-	ctx context.Context, userID string,
-) (data []orderInfo, err error) {
-	query := `
-		select "order"."id", 
-			   "order"."status", 
-			   "accrual"."amount", 
-			   "order"."uploaded_at"::timestamptz 
-		from "order" 
-				 left outer join "accrual" on "order"."id" = "accrual"."order_id" 
-		where "order"."user_id" = $1 
-		order by "uploaded_at"; 
-	`
-	rows, err := storage.db.Conn.QueryContext(ctx, query, userID)
-	if err != nil {
-		return nil, err
-	}
-	defer storage.db.CloseRows(rows)
-
-	var info orderInfo
-	for rows.Next() {
-		err = rows.Scan(
-			&info.Number,
-			&info.Status,
-			&info.Accrual,
-			&info.UploadedAt,
-		)
-		if err != nil {
-			return nil, err
-		}
-		data = append(data, info)
-	}
-	err = rows.Err()
-	if err != nil {
-		return nil, err
-	}
-
-	return data, nil
 }
 
 func (storage *Storage) GetUserByToken(
