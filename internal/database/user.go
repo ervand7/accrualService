@@ -8,10 +8,15 @@ import (
 	e "github.com/ervand7/go-musthave-diploma-tpl/internal/errors"
 )
 
+func hash256(src string) (dst string) {
+	dst = fmt.Sprintf("%x", sha256.Sum256([]byte(src)))
+	return dst
+}
+
 func getValueFromRows(
-	storage *Storage, rows *sql.Rows,
+	s *Storage, rows *sql.Rows,
 ) (result string, err error) {
-	defer storage.db.CloseRows(rows)
+	defer s.db.CloseRows(rows)
 
 	for rows.Next() {
 		err = rows.Scan(&result)
@@ -27,21 +32,20 @@ func getValueFromRows(
 	return result, nil
 }
 
-func (storage *Storage) CreateUser(
+func (s *Storage) CreateUser(
 	ctx context.Context, login, password, token string,
 ) error {
-	hashedPassword := fmt.Sprintf("%x", sha256.Sum256([]byte(password)))
 	query := `
 		insert into "public"."user" ("login", "password", "token")
 		values ($1, $2, $3)
 		on conflict ("login") do nothing
 		returning "token";
 	`
-	rows, err := storage.db.Conn.QueryContext(ctx, query, login, hashedPassword, token)
+	rows, err := s.db.Conn.QueryContext(ctx, query, login, hash256(password), token)
 	if err != nil {
 		return err
 	}
-	setToken, err := getValueFromRows(storage, rows)
+	setToken, err := getValueFromRows(s, rows)
 	if err != nil {
 		return err
 	}
@@ -52,18 +56,18 @@ func (storage *Storage) CreateUser(
 	return nil
 }
 
-func (storage *Storage) GetUserByToken(
+func (s *Storage) GetUserByToken(
 	ctx context.Context, token string,
 ) (userID string, err error) {
 	query := `
 		select "id" from "public"."user"
 		where "token" = $1
 	`
-	rows, err := storage.db.Conn.QueryContext(ctx, query, token)
+	rows, err := s.db.Conn.QueryContext(ctx, query, token)
 	if err != nil {
 		return "", err
 	}
-	userID, err = getValueFromRows(storage, rows)
+	userID, err = getValueFromRows(s, rows)
 	if err != nil {
 		return "", err
 	}
@@ -71,7 +75,7 @@ func (storage *Storage) GetUserByToken(
 	return userID, nil
 }
 
-func (storage *Storage) GetUserBalance(
+func (s *Storage) GetUserBalance(
 	ctx context.Context, userID string,
 ) (balance map[string]float64, err error) {
 	var accrualSum, withdrawnSum float64
@@ -81,7 +85,7 @@ func (storage *Storage) GetUserBalance(
 	}
 
 	for tableName, result := range balance {
-		query := storage.db.Conn.QueryRowContext(
+		query := s.db.Conn.QueryRowContext(
 			ctx,
 			fmt.Sprintf(`select sum("amount") from %s where "user_id" = $1 
 			   group by "user_id";`, tableName,
@@ -104,22 +108,21 @@ func (storage *Storage) GetUserBalance(
 	return balance, nil
 }
 
-func (storage *Storage) UpdateToken(
+func (s *Storage) UpdateToken(
 	ctx context.Context, login, password, newToken string,
 ) error {
-	hashedPassword := fmt.Sprintf("%x", sha256.Sum256([]byte(password)))
 	query := `
 		update "public"."user" set "token" = $3
 		where "login" = $1 and "password" = $2
 		returning "token";
 	`
-	rows, err := storage.db.Conn.QueryContext(
-		ctx, query, login, hashedPassword, newToken,
+	rows, err := s.db.Conn.QueryContext(
+		ctx, query, login, hash256(password), newToken,
 	)
 	if err != nil {
 		return err
 	}
-	setToken, err := getValueFromRows(storage, rows)
+	setToken, err := getValueFromRows(s, rows)
 	if err != nil {
 		return err
 	}

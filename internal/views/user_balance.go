@@ -7,16 +7,16 @@ import (
 )
 
 // UserBalance /api/user/balance
-func (server *Server) UserBalance(w http.ResponseWriter, r *http.Request) {
+func (s *Server) UserBalance(w http.ResponseWriter, r *http.Request) {
 	ctx, cancel := context.WithTimeout(r.Context(), CtxSecond)
 	defer cancel()
-	userID := server.GetRequestUserID(ctx, r)
+	userID := s.GetRequestUserID(ctx, r)
 	if userID == "" {
 		http.Error(w, "not authorized", http.StatusUnauthorized)
 		return
 	}
 
-	balance, err := server.Storage.GetUserBalance(ctx, userID)
+	balance, err := s.Storage.GetUserBalance(ctx, userID)
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
@@ -29,5 +29,5 @@ func (server *Server) UserBalance(w http.ResponseWriter, r *http.Request) {
 
 	w.Header().Add("Content-type", "application/json")
 	w.WriteHeader(http.StatusOK)
-	server.Write(body, w)
+	s.Write(body, w)
 }

@@ -2,6 +2,7 @@ package database
 
 import (
 	"context"
+	d "github.com/ervand7/go-musthave-diploma-tpl/internal/datamapping"
 	e "github.com/ervand7/go-musthave-diploma-tpl/internal/errors"
 	"github.com/stretchr/testify/assert"
 	"math/rand"
@@ -30,7 +31,7 @@ func TestCreateOrder_Success(t *testing.T) {
 	var order struct {
 		ID         int
 		UserID     string
-		Status     OrderStatusValue
+		Status     d.OrderStatusValue
 		UploadedAt time.Time
 	}
 	for rows.Next() {
@@ -44,7 +45,7 @@ func TestCreateOrder_Success(t *testing.T) {
 
 	assert.Equal(t, number, order.ID)
 	assert.Equal(t, userID, order.UserID)
-	assert.Equal(t, OrderStatus.NEW, order.Status)
+	assert.Equal(t, d.OrderStatus.NEW, order.Status)
 	assert.NotNil(t, order.UploadedAt)
 }
 

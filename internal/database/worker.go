@@ -3,27 +3,26 @@ package database
 import (
 	"fmt"
 	"github.com/ervand7/go-musthave-diploma-tpl/internal/config"
+	d "github.com/ervand7/go-musthave-diploma-tpl/internal/datamapping"
 )
 
-func (storage *Storage) FindOrdersToAccrual(
+func (s *Storage) FindOrdersToAccrual(
 	lastID interface{},
 ) (orders []int, err error) {
 	var lastIDCondition string
 	if lastID != nil {
 		lastIDCondition = fmt.Sprintf(` and "id" > %d `, lastID)
-	} else {
-		lastIDCondition = ""
 	}
 	query := fmt.Sprintf(`
 			select "id" from "public"."order" where "status" in ('NEW', 'PROCESSING') 
 			%s order by "id" limit %d
 			`, lastIDCondition, config.OrdersBatchSize)
 
-	rows, err := storage.db.Conn.Query(query)
+	rows, err := s.db.Conn.Query(query)
 	if err != nil {
 		return nil, err
 	}
-	defer storage.db.CloseRows(rows)
+	defer s.db.CloseRows(rows)
 
 	for rows.Next() {
 		var orderID int
@@ -40,10 +39,10 @@ func (storage *Storage) FindOrdersToAccrual(
 	return orders, nil
 }
 
-func (storage *Storage) UpdateOrderAndAccrual(
-	id int, status OrderStatusValue, accrual float64,
+func (s *Storage) UpdateOrderAndAccrual(
+	id int, status d.OrderStatusValue, accrual float64,
 ) error {
-	transaction, err := storage.db.Conn.Begin()
+	transaction, err := s.db.Conn.Begin()
 	if err != nil {
 		return err
 	}

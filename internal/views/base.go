@@ -24,19 +24,19 @@ func NewServer() Server {
 	return s
 }
 
-func (server Server) SetResponseCookie(token string, w http.ResponseWriter) {
+func (s Server) SetResponseCookie(token string, w http.ResponseWriter) {
 	encoded := hex.EncodeToString([]byte(token))
 	cookie := &http.Cookie{Name: "auth_token", Value: encoded, HttpOnly: true}
 	http.SetCookie(w, cookie)
 }
 
-func (server Server) SetRequestCookie(token string, r *http.Request) {
+func (s Server) SetRequestCookie(token string, r *http.Request) {
 	encoded := hex.EncodeToString([]byte(token))
 	cookie := &http.Cookie{Name: "auth_token", Value: encoded, HttpOnly: true}
 	r.AddCookie(cookie)
 }
 
-func (server Server) GetRequestUserID(
+func (s Server) GetRequestUserID(
 	ctx context.Context, r *http.Request,
 ) (userID string) {
 	data, err := r.Cookie("auth_token")
@@ -52,7 +52,7 @@ func (server Server) GetRequestUserID(
 		return ""
 	}
 
-	userID, err = server.Storage.GetUserByToken(ctx, string(decodedToken))
+	userID, err = s.Storage.GetUserByToken(ctx, string(decodedToken))
 	if err != nil {
 		logger.Logger.Error(err.Error())
 		return ""
@@ -61,14 +61,14 @@ func (server Server) GetRequestUserID(
 	return userID
 }
 
-func (server Server) Write(msg []byte, w http.ResponseWriter) {
+func (s Server) Write(msg []byte, w http.ResponseWriter) {
 	_, err := w.Write(msg)
 	if err != nil {
 		logger.Logger.Error(err.Error())
 	}
 }
 
-func (server Server) CloseBody(r *http.Request) {
+func (s Server) CloseBody(r *http.Request) {
 	err := r.Body.Close()
 	if err != nil {
 		logger.Logger.Warn(err.Error())
