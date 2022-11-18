@@ -12,8 +12,6 @@ func (s *Storage) FindOrdersToAccrual(
 	var lastIDCondition string
 	if lastID != nil {
 		lastIDCondition = fmt.Sprintf(` and "id" > %d `, lastID)
-	} else {
-		lastIDCondition = ""
 	}
 	query := fmt.Sprintf(`
 			select "id" from "public"."order" where "status" in ('NEW', 'PROCESSING') 
