@@ -63,6 +63,12 @@ func (db *database) Run() {
 	}()
 }
 
+func (db *database) CloseRows(rows *sql.Rows) {
+	if err := rows.Close(); err != nil {
+		logger.Logger.Error(err.Error())
+	}
+}
+
 func (db *database) connStart() (err error) {
 	conn, err := goose.OpenDBWithDriver("pgx", config.GetConfig().DatabaseURI)
 	if err != nil {
@@ -78,12 +84,6 @@ func (db *database) connClose() (err error) {
 		return err
 	}
 	return nil
-}
-
-func (db *database) CloseRows(rows *sql.Rows) {
-	if err := rows.Close(); err != nil {
-		logger.Logger.Error(err.Error())
-	}
 }
 
 func (db *database) setConnPool() {
