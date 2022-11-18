@@ -19,6 +19,7 @@ const (
 	maxIdleConnections    = 20
 	connMaxIdleTimeSecond = 30
 	connMaxLifetimeSecond = 2
+	notifyChanBuffer      = 3
 )
 
 type database struct {
@@ -48,7 +49,7 @@ func (db *database) Run() {
 		logger.Logger.Fatal(err.Error())
 	}
 
-	ch := make(chan os.Signal, 3)
+	ch := make(chan os.Signal, notifyChanBuffer)
 	signal.Notify(ch, os.Interrupt, syscall.SIGTERM, syscall.SIGINT)
 	go func() {
 		<-ch
@@ -56,10 +57,8 @@ func (db *database) Run() {
 		err = db.connClose()
 		if err != nil {
 			logger.Logger.Error(err.Error())
-			os.Exit(1)
 		}
 		logger.Logger.Info("DB Connection was closed successfully")
-		os.Exit(0)
 	}()
 }
 
