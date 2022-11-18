@@ -2,6 +2,7 @@ package database
 
 import (
 	"context"
+	d "github.com/ervand7/go-musthave-diploma-tpl/internal/datamapping"
 	e "github.com/ervand7/go-musthave-diploma-tpl/internal/errors"
 	"github.com/stretchr/testify/assert"
 	"math/rand"
@@ -18,7 +19,7 @@ func TestCreateWithdraw_Success(t *testing.T) {
 	accrual := rand.Float64()
 	err := storage.CreateOrder(ctx, orderID, userID)
 	assert.NoError(t, err)
-	err = storage.UpdateOrderAndAccrual(orderID, OrderStatus.PROCESSED, accrual)
+	err = storage.UpdateOrderAndAccrual(ctx, orderID, d.OrderStatus.PROCESSED, accrual)
 	assert.NoError(t, err)
 	balance, err := storage.GetUserBalance(ctx, userID)
 	assert.NoError(t, err)
@@ -55,7 +56,7 @@ func TestCreateWithdraw_FailNotEnoughMoney(t *testing.T) {
 	accrual := rand.Float64()
 	err := storage.CreateOrder(ctx, orderID, userID)
 	assert.NoError(t, err)
-	err = storage.UpdateOrderAndAccrual(orderID, OrderStatus.PROCESSED, accrual)
+	err = storage.UpdateOrderAndAccrual(ctx, orderID, d.OrderStatus.PROCESSED, accrual)
 	assert.NoError(t, err)
 	balanceBefore, err := storage.GetUserBalance(ctx, userID)
 	assert.NoError(t, err)
@@ -86,7 +87,7 @@ func TestGetUserWithdrawals_Success(t *testing.T) {
 		orderID := rand.Intn(1000000)
 		query := `insert into "public"."withdrawn" ("order_id", "user_id", "amount") 
 			values ($1, $2, $3);`
-		storage.db.Conn.QueryRow(query, orderID, userID, amount)
+		storage.db.conn.QueryRow(query, orderID, userID, amount)
 	}
 
 	ctx := context.TODO()

@@ -7,16 +7,16 @@ import (
 )
 
 // GetUserOrders /api/user/orders
-func (server *Server) GetUserOrders(w http.ResponseWriter, r *http.Request) {
-	ctx, cancel := context.WithTimeout(r.Context(), CtxSecond)
+func (s *Server) GetUserOrders(w http.ResponseWriter, r *http.Request) {
+	ctx, cancel := context.WithTimeout(r.Context(), ctxSecond)
 	defer cancel()
-	userID := server.GetRequestUserID(ctx, r)
+	userID := s.GetRequestUserID(ctx, r)
 	if userID == "" {
 		http.Error(w, "not authorized", http.StatusUnauthorized)
 		return
 	}
 
-	userOrders, err := server.Storage.GetUserOrders(ctx, userID)
+	userOrders, err := s.Storage.GetUserOrders(ctx, userID)
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
@@ -38,5 +38,5 @@ func (server *Server) GetUserOrders(w http.ResponseWriter, r *http.Request) {
 
 	w.Header().Add("Content-type", "application/json")
 	w.WriteHeader(httpStatus)
-	server.Write(body, w)
+	s.Write(body, w)
 }

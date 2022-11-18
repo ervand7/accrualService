@@ -2,6 +2,7 @@ package database
 
 import (
 	"context"
+	d "github.com/ervand7/go-musthave-diploma-tpl/internal/datamapping"
 	e "github.com/ervand7/go-musthave-diploma-tpl/internal/errors"
 	"github.com/stretchr/testify/assert"
 	"math/rand"
@@ -19,18 +20,18 @@ func TestCreateOrder_Success(t *testing.T) {
 	err := storage.CreateOrder(ctx, number, userID)
 	assert.NoError(t, err)
 
-	rows, err := storage.db.Conn.Query(`
+	rows, err := storage.db.conn.Query(`
 		select "id", "user_id", "status", "uploaded_at" 
 		from "public"."order" 
 		where "user_id" = $1`, userID,
 	)
 	assert.NoError(t, err)
-	defer storage.db.CloseRows(rows)
+	defer storage.db.closeRows(rows)
 
 	var order struct {
 		ID         int
 		UserID     string
-		Status     OrderStatusValue
+		Status     d.OrderStatusValue
 		UploadedAt time.Time
 	}
 	for rows.Next() {
@@ -44,7 +45,7 @@ func TestCreateOrder_Success(t *testing.T) {
 
 	assert.Equal(t, number, order.ID)
 	assert.Equal(t, userID, order.UserID)
-	assert.Equal(t, OrderStatus.NEW, order.Status)
+	assert.Equal(t, d.OrderStatus.NEW, order.Status)
 	assert.NotNil(t, order.UploadedAt)
 }
 
@@ -96,7 +97,7 @@ func TestGetUserOrders_Success(t *testing.T) {
 		if i%2 == 0 {
 			query := `insert into "public"."accrual" ("order_id", "user_id", "amount") 
 			values ($1, $2, $3);`
-			storage.db.Conn.QueryRow(query, orderID, userID, amount)
+			storage.db.conn.QueryRow(query, orderID, userID, amount)
 		}
 	}
 

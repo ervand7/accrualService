@@ -11,8 +11,8 @@ import (
 )
 
 // Login /api/user/login
-func (server *Server) Login(w http.ResponseWriter, r *http.Request) {
-	defer server.CloseBody(r)
+func (s *Server) Login(w http.ResponseWriter, r *http.Request) {
+	defer s.CloseBody(r)
 	body, err := io.ReadAll(r.Body)
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusBadRequest)
@@ -33,13 +33,13 @@ func (server *Server) Login(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	ctx, cancel := context.WithTimeout(r.Context(), CtxSecond)
+	ctx, cancel := context.WithTimeout(r.Context(), ctxSecond)
 	defer cancel()
 
 	var respMessage string
 	httpStatus := http.StatusOK
 	token := uuid.New().String()
-	if err = server.Storage.UpdateToken(
+	if err = s.Storage.UpdateToken(
 		ctx, credentials.Login, credentials.Password, token,
 	); err != nil {
 		if errData, ok := err.(*e.UserNotFoundError); ok {
@@ -50,10 +50,10 @@ func (server *Server) Login(w http.ResponseWriter, r *http.Request) {
 			return
 		}
 	} else {
-		server.SetResponseCookie(token, w)
+		s.SetResponseCookie(token, w)
 	}
 
 	w.Header().Add("Content-type", "text/plain; charset=utf-8")
 	w.WriteHeader(httpStatus)
-	server.Write([]byte(respMessage), w)
+	s.Write([]byte(respMessage), w)
 }

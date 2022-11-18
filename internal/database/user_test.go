@@ -21,9 +21,9 @@ func TestCreateUser_Success(t *testing.T) {
 	err := storage.CreateUser(context.TODO(), login, password, token)
 	assert.NoError(t, err)
 
-	rows, err := storage.db.Conn.Query(`select * from "public"."user"`)
+	rows, err := storage.db.conn.Query(`select * from "public"."user"`)
 	assert.NoError(t, err)
-	defer storage.db.CloseRows(rows)
+	defer storage.db.closeRows(rows)
 
 	var user struct {
 		ID       string
@@ -101,11 +101,11 @@ func TestGetUserBalance_Success(t *testing.T) {
 		if i%2 == 0 {
 			query := `insert into "public"."accrual" ("order_id", "user_id", "amount") 
 			values ($1, $2, $3);`
-			storage.db.Conn.QueryRow(query, orderID, userID, amount)
+			storage.db.conn.QueryRow(query, orderID, userID, amount)
 		} else {
 			query := `insert into "public"."withdrawn" ("order_id", "user_id", "amount") 
 			values ($1, $2, $3);`
-			storage.db.Conn.QueryRow(query, orderID, userID, amount)
+			storage.db.conn.QueryRow(query, orderID, userID, amount)
 		}
 	}
 
@@ -156,12 +156,12 @@ func TestUpdateToken_Success(t *testing.T) {
 	err = storage.UpdateToken(ctx, login, password, newToken)
 	assert.NoError(t, err)
 
-	rows, err := storage.db.Conn.Query(`
+	rows, err := storage.db.conn.Query(`
 		select "token" from "public"."user" where "login" = $1`,
 		login,
 	)
 	assert.NoError(t, err)
-	defer storage.db.CloseRows(rows)
+	defer storage.db.closeRows(rows)
 
 	var resultToken string
 	for rows.Next() {
@@ -183,12 +183,12 @@ func TestUpdateToken_FailUserNotFound(t *testing.T) {
 	err := storage.UpdateToken(context.TODO(), login, password, token)
 	assert.Error(t, err)
 
-	rows, err := storage.db.Conn.Query(`
+	rows, err := storage.db.conn.Query(`
 		select "token" from "public"."user" where "login" = $1`,
 		login,
 	)
 	assert.NoError(t, err)
-	defer storage.db.CloseRows(rows)
+	defer storage.db.closeRows(rows)
 
 	var resultToken string
 	for rows.Next() {

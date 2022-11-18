@@ -16,7 +16,7 @@ func GzipMiddleware(next http.Handler) http.Handler {
 				return
 			}
 			defer func() {
-				if err := gzipWrappedBody.Close(); err != nil {
+				if err = gzipWrappedBody.Close(); err != nil {
 					l.Logger.Warn(err.Error())
 				}
 			}()

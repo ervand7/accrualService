@@ -9,8 +9,8 @@ import (
 
 func Downgrade() {
 	db := database{}
-	db.Run()
-	if err := goose.Run("down", db.Conn, getMigrationsDir()); err != nil {
+	db.run()
+	if err := goose.Run("down", db.conn, getMigrationsDir()); err != nil {
 		logger.Logger.Error(err.Error())
 	}
 }
@@ -18,13 +18,13 @@ func Downgrade() {
 func UserIDFixture(
 	storage *Storage, login, password, token string, t *testing.T,
 ) (userID string) {
-	rows, err := storage.db.Conn.Query(`
+	rows, err := storage.db.conn.Query(`
 		insert into "public"."user" ("login", "password", "token") values
 		($1, $2, $3) returning "user"."id"
 		`, login, password, token,
 	)
 	assert.NoError(t, err)
-	defer storage.db.CloseRows(rows)
+	defer storage.db.closeRows(rows)
 
 	for rows.Next() {
 		err = rows.Scan(&userID)
