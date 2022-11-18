@@ -13,16 +13,16 @@ import (
 )
 
 // Withdraw /api/user/balance/withdraw
-func (server *Server) Withdraw(w http.ResponseWriter, r *http.Request) {
-	ctx, cancel := context.WithTimeout(r.Context(), CtxSecond)
+func (s *Server) Withdraw(w http.ResponseWriter, r *http.Request) {
+	ctx, cancel := context.WithTimeout(r.Context(), ctxSecond)
 	defer cancel()
-	userID := server.GetRequestUserID(ctx, r)
+	userID := s.GetRequestUserID(ctx, r)
 	if userID == "" {
 		http.Error(w, "not authorized", http.StatusUnauthorized)
 		return
 	}
 
-	defer server.CloseBody(r)
+	defer s.CloseBody(r)
 	bodyRaw, err := io.ReadAll(r.Body)
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusBadRequest)
@@ -55,7 +55,7 @@ func (server *Server) Withdraw(w http.ResponseWriter, r *http.Request) {
 	}
 
 	httpStatus := http.StatusOK
-	err = server.Storage.CreateWithdraw(ctx, userID, orderID, body.Sum)
+	err = s.Storage.CreateWithdraw(ctx, userID, orderID, body.Sum)
 	if err != nil {
 		respMessage = err.Error()
 		_, ok := err.(*e.NotEnoughMoneyError)
@@ -69,5 +69,5 @@ func (server *Server) Withdraw(w http.ResponseWriter, r *http.Request) {
 
 	w.Header().Add("Content-type", "text/plain; charset=utf-8")
 	w.WriteHeader(httpStatus)
-	server.Write([]byte(respMessage), w)
+	s.Write([]byte(respMessage), w)
 }

@@ -5,6 +5,7 @@ import (
 	"context"
 	"encoding/json"
 	"github.com/ervand7/go-musthave-diploma-tpl/internal/database"
+	d "github.com/ervand7/go-musthave-diploma-tpl/internal/datamapping"
 	"github.com/go-chi/chi/v5"
 	"github.com/google/uuid"
 	"github.com/stretchr/testify/assert"
@@ -35,7 +36,7 @@ func TestGetUserWithdrawals_200Success(t *testing.T) {
 	amount := 10.0
 	err := server.Storage.CreateOrder(ctx, orderID, userID)
 	assert.NoError(t, err)
-	err = server.Storage.UpdateOrderAndAccrual(orderID, database.OrderStatus.NEW, amount)
+	err = server.Storage.UpdateOrderAndAccrual(ctx, orderID, d.OrderStatus.NEW, amount)
 	assert.NoError(t, err)
 	err = server.Storage.CreateWithdraw(ctx, userID, WithdrawalOrderID, amount-1)
 	assert.NoError(t, err)

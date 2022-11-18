@@ -9,4 +9,5 @@ export DATABASE_URI='user=ervand password=ervand dbname=accrual_test host=localh
 go test \
   github.com/ervand7/go-musthave-diploma-tpl/internal/database \
   github.com/ervand7/go-musthave-diploma-tpl/internal/views \
+  github.com/ervand7/go-musthave-diploma-tpl/internal/utils \
   -count 1 -v -p 1
