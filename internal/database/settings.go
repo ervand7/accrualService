@@ -14,6 +14,13 @@ import (
 	"time"
 )
 
+const (
+	maxOpenConnections    = 20
+	maxIdleConnections    = 20
+	connMaxIdleTimeSecond = 30
+	connMaxLifetimeSecond = 2
+)
+
 type database struct {
 	Conn *sql.DB
 }
@@ -31,7 +38,7 @@ func NewStorage() *Storage {
 }
 
 func (db *database) Run() {
-	err := db.ConnStart()
+	err := db.connStart()
 	if err != nil {
 		logger.Logger.Fatal(err.Error())
 	}
@@ -46,7 +53,7 @@ func (db *database) Run() {
 	go func() {
 		<-ch
 		signal.Stop(ch)
-		err = db.ConnClose()
+		err = db.connClose()
 		if err != nil {
 			logger.Logger.Error(err.Error())
 			os.Exit(1)
@@ -56,7 +63,7 @@ func (db *database) Run() {
 	}()
 }
 
-func (db *database) ConnStart() (err error) {
+func (db *database) connStart() (err error) {
 	conn, err := goose.OpenDBWithDriver("pgx", config.GetConfig().DatabaseURI)
 	if err != nil {
 		return err
@@ -65,16 +72,8 @@ func (db *database) ConnStart() (err error) {
 	return nil
 }
 
-func (db *database) ConnClose() (err error) {
+func (db *database) connClose() (err error) {
 	err = db.Conn.Close()
-	if err != nil {
-		return err
-	}
-	return nil
-}
-
-func (db *database) Ping() (err error) {
-	err = db.Conn.Ping()
 	if err != nil {
 		return err
 	}
@@ -88,10 +87,10 @@ func (db *database) CloseRows(rows *sql.Rows) {
 }
 
 func (db *database) setConnPool() {
-	db.Conn.SetMaxOpenConns(20)
-	db.Conn.SetMaxIdleConns(20)
-	db.Conn.SetConnMaxIdleTime(time.Second * 30)
-	db.Conn.SetConnMaxLifetime(time.Minute * 2)
+	db.Conn.SetMaxOpenConns(maxOpenConnections)
+	db.Conn.SetMaxIdleConns(maxIdleConnections)
+	db.Conn.SetConnMaxIdleTime(time.Second * connMaxIdleTimeSecond)
+	db.Conn.SetConnMaxLifetime(time.Minute * connMaxLifetimeSecond)
 }
 
 func (db *database) migrate() (err error) {
