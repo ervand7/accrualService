@@ -37,7 +37,7 @@ type orderInfo struct {
 	UploadedAt time.Time `json:"uploaded_at"`
 }
 
-func (storage *Storage) CreateOrder(
+func (s *Storage) CreateOrder(
 	ctx context.Context, orderNumber int, userID string,
 ) error {
 	query := `
@@ -54,13 +54,13 @@ func (storage *Storage) CreateOrder(
 		where "id" = $1
 		  and not exists(select 1 from cte);
 	`
-	rows, err := storage.db.Conn.QueryContext(
+	rows, err := s.db.Conn.QueryContext(
 		ctx, query, orderNumber, userID, OrderStatus.NEW,
 	)
 	if err != nil {
 		return err
 	}
-	defer storage.db.CloseRows(rows)
+	defer s.db.CloseRows(rows)
 
 	var UserIDFromException interface{}
 	for rows.Next() {
@@ -85,24 +85,22 @@ func (storage *Storage) CreateOrder(
 	return nil
 }
 
-func (storage *Storage) GetUserOrders(
+func (s *Storage) GetUserOrders(
 	ctx context.Context, userID string,
 ) (data []orderInfo, err error) {
 	query := `
-		select "order"."id", 
-			   "order"."status", 
-			   "accrual"."amount", 
+		select "order"."id", "order"."status", "accrual"."amount", 
 			   "order"."uploaded_at"::timestamptz 
 		from "order" 
 				 left outer join "accrual" on "order"."id" = "accrual"."order_id" 
 		where "order"."user_id" = $1 
 		order by "uploaded_at"; 
 	`
-	rows, err := storage.db.Conn.QueryContext(ctx, query, userID)
+	rows, err := s.db.Conn.QueryContext(ctx, query, userID)
 	if err != nil {
 		return nil, err
 	}
-	defer storage.db.CloseRows(rows)
+	defer s.db.CloseRows(rows)
 
 	var o orderInfo
 	for rows.Next() {

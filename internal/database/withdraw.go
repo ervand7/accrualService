@@ -12,10 +12,10 @@ type withdrawal struct {
 	ProcessedAt time.Time `json:"processed_at"`
 }
 
-func (storage *Storage) CreateWithdraw(
+func (s *Storage) CreateWithdraw(
 	ctx context.Context, userID string, orderID int, withdrawn float64,
 ) error {
-	balance, err := storage.GetUserBalance(ctx, userID)
+	balance, err := s.GetUserBalance(ctx, userID)
 	if err != nil {
 		return err
 	}
@@ -25,7 +25,7 @@ func (storage *Storage) CreateWithdraw(
 
 	query := `insert into "public"."withdrawn" ("order_id", "user_id", "amount") 
 	values ($1, $2, $3);`
-	_, err = storage.db.Conn.ExecContext(ctx, query, orderID, userID, withdrawn)
+	_, err = s.db.Conn.ExecContext(ctx, query, orderID, userID, withdrawn)
 	if err != nil {
 		return err
 	}
@@ -33,7 +33,7 @@ func (storage *Storage) CreateWithdraw(
 	return nil
 }
 
-func (storage *Storage) GetUserWithdrawals(
+func (s *Storage) GetUserWithdrawals(
 	ctx context.Context, userID string,
 ) (data []withdrawal, err error) {
 	query := `
@@ -41,11 +41,11 @@ func (storage *Storage) GetUserWithdrawals(
 		where "user_id" = $1 
 		order by "processed_at"; 
 	`
-	rows, err := storage.db.Conn.QueryContext(ctx, query, userID)
+	rows, err := s.db.Conn.QueryContext(ctx, query, userID)
 	if err != nil {
 		return nil, err
 	}
-	defer storage.db.CloseRows(rows)
+	defer s.db.CloseRows(rows)
 
 	var w withdrawal
 	for rows.Next() {
