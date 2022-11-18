@@ -2,40 +2,9 @@ package database
 
 import (
 	"context"
+	d "github.com/ervand7/go-musthave-diploma-tpl/internal/datamapping"
 	e "github.com/ervand7/go-musthave-diploma-tpl/internal/errors"
-	"time"
 )
-
-type OrderStatusValue string
-
-var OrderStatus = struct {
-	NEW        OrderStatusValue
-	PROCESSING OrderStatusValue
-	INVALID    OrderStatusValue
-	PROCESSED  OrderStatusValue
-}{
-	NEW:        "NEW",
-	PROCESSING: "PROCESSING",
-	INVALID:    "INVALID",
-	PROCESSED:  "PROCESSED",
-}
-
-func (o OrderStatusValue) FromEnum() OrderStatusValue {
-	if o != OrderStatus.NEW &&
-		o != OrderStatus.PROCESSING &&
-		o != OrderStatus.PROCESSED &&
-		o != OrderStatus.INVALID {
-		return ""
-	}
-	return o
-}
-
-type orderInfo struct {
-	Number     string    `json:"number"`
-	Status     string    `json:"status"`
-	Accrual    *float64  `json:"accrual,omitempty"`
-	UploadedAt time.Time `json:"uploaded_at"`
-}
 
 func (s *Storage) CreateOrder(
 	ctx context.Context, orderNumber int, userID string,
@@ -55,7 +24,7 @@ func (s *Storage) CreateOrder(
 		  and not exists(select 1 from cte);
 	`
 	rows, err := s.db.Conn.QueryContext(
-		ctx, query, orderNumber, userID, OrderStatus.NEW,
+		ctx, query, orderNumber, userID, d.OrderStatus.NEW,
 	)
 	if err != nil {
 		return err
@@ -87,7 +56,7 @@ func (s *Storage) CreateOrder(
 
 func (s *Storage) GetUserOrders(
 	ctx context.Context, userID string,
-) (data []orderInfo, err error) {
+) (data []d.Order, err error) {
 	query := `
 		select "order"."id", "order"."status", "accrual"."amount", 
 			   "order"."uploaded_at"::timestamptz 
@@ -102,7 +71,7 @@ func (s *Storage) GetUserOrders(
 	}
 	defer s.db.CloseRows(rows)
 
-	var o orderInfo
+	var o d.Order
 	for rows.Next() {
 		err = rows.Scan(&o.Number, &o.Status, &o.Accrual, &o.UploadedAt)
 		if err != nil {

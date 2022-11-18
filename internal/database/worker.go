@@ -3,6 +3,7 @@ package database
 import (
 	"fmt"
 	"github.com/ervand7/go-musthave-diploma-tpl/internal/config"
+	d "github.com/ervand7/go-musthave-diploma-tpl/internal/datamapping"
 )
 
 func (s *Storage) FindOrdersToAccrual(
@@ -41,7 +42,7 @@ func (s *Storage) FindOrdersToAccrual(
 }
 
 func (s *Storage) UpdateOrderAndAccrual(
-	id int, status OrderStatusValue, accrual float64,
+	id int, status d.OrderStatusValue, accrual float64,
 ) error {
 	transaction, err := s.db.Conn.Begin()
 	if err != nil {

@@ -5,6 +5,7 @@ import (
 	"context"
 	"fmt"
 	"github.com/ervand7/go-musthave-diploma-tpl/internal/database"
+	d "github.com/ervand7/go-musthave-diploma-tpl/internal/datamapping"
 	"github.com/go-chi/chi/v5"
 	"github.com/google/uuid"
 	"github.com/stretchr/testify/assert"
@@ -34,7 +35,7 @@ func TestWithdraw_200Success(t *testing.T) {
 	orderID := 2200135834
 	err := server.Storage.CreateOrder(context.TODO(), orderID, userID)
 	assert.NoError(t, err)
-	err = server.Storage.UpdateOrderAndAccrual(orderID, database.OrderStatus.NEW, amount)
+	err = server.Storage.UpdateOrderAndAccrual(orderID, d.OrderStatus.NEW, amount)
 	assert.NoError(t, err)
 
 	router := chi.NewRouter()
