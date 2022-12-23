@@ -2,13 +2,14 @@ package database
 
 import (
 	"database/sql"
+	"path/filepath"
+	"runtime"
+	"time"
+
 	"github.com/ervand7/go-musthave-diploma-tpl/internal/config"
 	"github.com/ervand7/go-musthave-diploma-tpl/internal/logger"
 	_ "github.com/jackc/pgx/v4/stdlib"
 	"github.com/pressly/goose/v3"
-	"path/filepath"
-	"runtime"
-	"time"
 )
 
 const (

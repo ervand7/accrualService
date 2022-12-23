@@ -4,12 +4,13 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
-	e "github.com/ervand7/go-musthave-diploma-tpl/internal/errors"
-	"github.com/ervand7/go-musthave-diploma-tpl/internal/logger"
-	"github.com/theplant/luhn"
 	"io"
 	"net/http"
 	"strconv"
+
+	e "github.com/ervand7/go-musthave-diploma-tpl/internal/errors"
+	"github.com/ervand7/go-musthave-diploma-tpl/internal/logger"
+	"github.com/theplant/luhn"
 )
 
 // Withdraw /api/user/balance/withdraw

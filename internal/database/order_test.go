@@ -2,12 +2,13 @@ package database
 
 import (
 	"context"
-	d "github.com/ervand7/go-musthave-diploma-tpl/internal/datamapping"
-	e "github.com/ervand7/go-musthave-diploma-tpl/internal/errors"
-	"github.com/stretchr/testify/assert"
 	"math/rand"
 	"testing"
 	"time"
+
+	d "github.com/ervand7/go-musthave-diploma-tpl/internal/datamapping"
+	e "github.com/ervand7/go-musthave-diploma-tpl/internal/errors"
+	"github.com/stretchr/testify/assert"
 )
 
 func TestCreateOrder_Success(t *testing.T) {

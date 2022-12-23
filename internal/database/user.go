@@ -5,6 +5,7 @@ import (
 	"crypto/sha256"
 	"database/sql"
 	"fmt"
+
 	e "github.com/ervand7/go-musthave-diploma-tpl/internal/errors"
 )
 

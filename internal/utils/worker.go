@@ -5,16 +5,17 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
-	"github.com/ervand7/go-musthave-diploma-tpl/internal/config"
-	"github.com/ervand7/go-musthave-diploma-tpl/internal/database"
-	d "github.com/ervand7/go-musthave-diploma-tpl/internal/datamapping"
-	"github.com/ervand7/go-musthave-diploma-tpl/internal/logger"
-	"github.com/jackc/pgconn"
 	"io"
 	"net/http"
 	"strconv"
 	"sync"
 	"time"
+
+	"github.com/ervand7/go-musthave-diploma-tpl/internal/config"
+	"github.com/ervand7/go-musthave-diploma-tpl/internal/database"
+	d "github.com/ervand7/go-musthave-diploma-tpl/internal/datamapping"
+	"github.com/ervand7/go-musthave-diploma-tpl/internal/logger"
+	"github.com/jackc/pgconn"
 )
 
 const (

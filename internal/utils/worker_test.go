@@ -2,12 +2,13 @@ package utils
 
 import (
 	"context"
-	"github.com/ervand7/go-musthave-diploma-tpl/internal/database"
-	"github.com/stretchr/testify/assert"
 	"math/rand"
 	"strconv"
 	"testing"
 	"time"
+
+	"github.com/ervand7/go-musthave-diploma-tpl/internal/database"
+	"github.com/stretchr/testify/assert"
 )
 
 func TestStartWorker_Success(t *testing.T) {

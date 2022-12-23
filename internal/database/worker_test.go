@@ -2,12 +2,13 @@ package database
 
 import (
 	"context"
-	"github.com/ervand7/go-musthave-diploma-tpl/internal/config"
-	d "github.com/ervand7/go-musthave-diploma-tpl/internal/datamapping"
-	"github.com/stretchr/testify/assert"
 	"math/rand"
 	"testing"
 	"time"
+
+	"github.com/ervand7/go-musthave-diploma-tpl/internal/config"
+	d "github.com/ervand7/go-musthave-diploma-tpl/internal/datamapping"
+	"github.com/stretchr/testify/assert"
 )
 
 func TestFindOrdersToAccrual_Success(t *testing.T) {

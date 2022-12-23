@@ -4,16 +4,17 @@ import (
 	"bytes"
 	"context"
 	"fmt"
+	"math/rand"
+	"net/http"
+	"net/http/httptest"
+	"testing"
+
 	"github.com/ervand7/go-musthave-diploma-tpl/internal/database"
 	d "github.com/ervand7/go-musthave-diploma-tpl/internal/datamapping"
 	"github.com/go-chi/chi/v5"
 	"github.com/google/uuid"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
-	"math/rand"
-	"net/http"
-	"net/http/httptest"
-	"testing"
 )
 
 func TestWithdraw_200Success(t *testing.T) {

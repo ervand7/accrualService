@@ -1,9 +1,10 @@
 package router
 
 import (
-	"github.com/ervand7/go-musthave-diploma-tpl/internal/config"
 	"log"
 	"net/http"
+
+	"github.com/ervand7/go-musthave-diploma-tpl/internal/config"
 )
 
 func Run() {

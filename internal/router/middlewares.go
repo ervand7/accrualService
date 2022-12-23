@@ -2,8 +2,9 @@ package router
 
 import (
 	"compress/gzip"
-	l "github.com/ervand7/go-musthave-diploma-tpl/internal/logger"
 	"net/http"
+
+	l "github.com/ervand7/go-musthave-diploma-tpl/internal/logger"
 )
 
 func GzipMiddleware(next http.Handler) http.Handler {

@@ -3,11 +3,12 @@ package views
 import (
 	"context"
 	"encoding/json"
+	"io"
+	"net/http"
+
 	e "github.com/ervand7/go-musthave-diploma-tpl/internal/errors"
 	"github.com/ervand7/go-musthave-diploma-tpl/internal/logger"
 	"github.com/google/uuid"
-	"io"
-	"net/http"
 )
 
 // Login /api/user/login

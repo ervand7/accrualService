@@ -2,8 +2,9 @@ package database
 
 import (
 	"context"
-	e "github.com/ervand7/go-musthave-diploma-tpl/internal/errors"
 	"time"
+
+	e "github.com/ervand7/go-musthave-diploma-tpl/internal/errors"
 )
 
 type withdrawal struct {

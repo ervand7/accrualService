@@ -1,10 +1,11 @@
 package database
 
 import (
+	"testing"
+
 	"github.com/ervand7/go-musthave-diploma-tpl/internal/logger"
 	"github.com/pressly/goose/v3"
 	"github.com/stretchr/testify/assert"
-	"testing"
 )
 
 func Downgrade() {

@@ -2,11 +2,12 @@ package database
 
 import (
 	"context"
+	"math/rand"
+	"testing"
+
 	d "github.com/ervand7/go-musthave-diploma-tpl/internal/datamapping"
 	e "github.com/ervand7/go-musthave-diploma-tpl/internal/errors"
 	"github.com/stretchr/testify/assert"
-	"math/rand"
-	"testing"
 )
 
 func TestCreateWithdraw_Success(t *testing.T) {

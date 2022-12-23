@@ -3,11 +3,12 @@ package views
 import (
 	"context"
 	"encoding/hex"
+	"net/http"
+	"time"
+
 	"github.com/ervand7/go-musthave-diploma-tpl/internal/database"
 	"github.com/ervand7/go-musthave-diploma-tpl/internal/logger"
 	"github.com/ervand7/go-musthave-diploma-tpl/internal/utils"
-	"net/http"
-	"time"
 )
 
 const ctxSecond = 2 * time.Second

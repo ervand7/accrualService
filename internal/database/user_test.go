@@ -4,11 +4,12 @@ import (
 	"context"
 	"crypto/sha256"
 	"fmt"
+	"math/rand"
+	"testing"
+
 	e "github.com/ervand7/go-musthave-diploma-tpl/internal/errors"
 	"github.com/google/uuid"
 	"github.com/stretchr/testify/assert"
-	"math/rand"
-	"testing"
 )
 
 func TestCreateUser_Success(t *testing.T) {
